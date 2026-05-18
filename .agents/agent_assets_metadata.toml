@@ -24,3 +24,39 @@ id = "t8qSz-z9VsJQmUpHU74Je"
 uri = "file://artifacts/portfolio/public/images/project-4.png"
 type = "image"
 title = "graphic design poster"
+
+[[generated]]
+id = "a9xZPA6SoOy5EmGr1w7kP"
+uri = "file://attached_assets/generated_images/futuristic_real_time_computer_d788.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "0KdUF61nQo5GhbIt5kmEW"
+uri = "file://attached_assets/generated_images/decentralized_crypto_peer_trading_8715.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "zRS5hT9Z08fn9Xo7IELah"
+uri = "file://attached_assets/generated_images/ai_powered_crypto_tax_61a7.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "xf93AMCyw7fqjq126q70R"
+uri = "file://attached_assets/generated_images/secure_anonymous_messaging_web_43ea.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "dkvkzaI4S2SW87UZDA3ed"
+uri = "file://attached_assets/generated_images/discord_bot_dashboard_showing_19e2.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "5xXYLTgYZ49ri_7BnN1t1"
+uri = "file://attached_assets/generated_images/crypto_trading_automation_tool_dc13.png"
+type = "image"
+title = "generated_image"

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowRight,
@@ -11,7 +11,6 @@ import {
   Clock,
   Award,
   Monitor,
-  Database,
   BarChart2,
   Palette,
   Code2,
@@ -21,8 +20,13 @@ import {
   Globe,
   Star,
   MessageSquare,
+  ExternalLink,
+  Bitcoin,
+  Binary,
+  ImageIcon,
 } from "lucide-react";
 import { FaGithub, FaTwitter, FaWhatsapp } from "react-icons/fa";
+import { SiFiverr } from "react-icons/si";
 import { useTheme } from "@/hooks/use-theme";
 
 const fadeUp = {
@@ -38,53 +42,187 @@ const stagger = {
 const NAV_LINKS = [
   { label: "Projects", href: "#projects" },
   { label: "Services", href: "#services" },
-  { label: "Resources", href: "#testimonials" },
-  { label: "Blog", href: "#" },
+  { label: "Graphics", href: "#graphics" },
+  { label: "Contact", href: "#contact" },
 ];
 
 const STATS = [
   { icon: TrendingUp, label: "Success rate", value: "95%", highlight: false },
-  { icon: FolderOpen, label: "Total Projects", value: "10+", highlight: false },
-  { icon: Clock, label: "Avg. Delivery Time", value: "4 weeks", highlight: false },
-  { icon: Award, label: "Experience", value: "2 yrs", highlight: true },
+  { icon: FolderOpen, label: "Total Projects", value: "3+", highlight: false },
+  { icon: Clock, label: "Avg. Delivery Time", value: "2 weeks", highlight: false },
+  { icon: Award, label: "Experience", value: "1.5+ yrs", highlight: true },
 ];
 
 const PROOF_STATS = [
-  { value: "2+", label: "Years of Experience" },
-  { value: "10+", label: "Projects Completed" },
-  { value: "4.8", label: "Star Ratings" },
-  { value: "8+", label: "Clients Served" },
+  { value: "5+", label: "Years Coding" },
+  { value: "1.5+", label: "Years Experience" },
+  { value: "10+", label: "Projects Built" },
+  { value: "2", label: "Research Papers" },
 ];
 
-const PROJECTS = [
+type Category =
+  | "All"
+  | "AI & Computer Vision"
+  | "Bot Automation"
+  | "Crypto & FinTech"
+  | "Web Applications"
+  | "Privacy & Security"
+  | "Learning & Practice";
+
+interface Project {
+  id: string;
+  category: Category;
+  gradientFrom: string;
+  gradientTo: string;
+  badgeClass: string;
+  title: string;
+  description: string;
+  stack: string[];
+  image: string | null;
+  link: string;
+}
+
+const PROJECTS: Project[] = [
   {
-    title: "FinTech Landing Page",
+    id: "iris",
+    category: "AI & Computer Vision",
+    gradientFrom: "#6d28d9",
+    gradientTo: "#3730a3",
+    badgeClass: "bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300",
+    title: "IRIS – Intelligent Real-time Imaging System",
     description:
-      "A high-converting landing page for a financial technology startup. Designed for speed, clarity, and trust — resulting in a 40% increase in sign-up conversions.",
-    image: "/images/project-1.png",
-    tag: "Web Development",
+      "Real-time computer vision system for target detection, tracking, behavioral analysis, and multi-camera inference.",
+    stack: ["Python", "OpenCV", "AI/ML"],
+    image: "/images/proj-iris.png",
+    link: "https://github.com/ONOSPETER/IRIS-Intelligent-Real-time-Imaging-System-",
   },
   {
-    title: "Inventory ERP System",
+    id: "telegram-py",
+    category: "Bot Automation",
+    gradientFrom: "#2563eb",
+    gradientTo: "#0891b2",
+    badgeClass: "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300",
+    title: "Telegram Echo Bot (Python)",
     description:
-      "A full-stack inventory management and ERP web application built for a small-scale trading business. Tracks stock, orders, and reports in real-time.",
-    image: "/images/project-2.png",
-    tag: "Full-Stack App",
+      "Telegram bot that echoes user messages for testing and automation purposes.",
+    stack: ["Python", "Telegram Bot API"],
+    image: null,
+    link: "https://github.com/ONOSPETER/telegram-echo-bot",
   },
   {
-    title: "Sales Analytics Dashboard",
+    id: "telegram-node",
+    category: "Bot Automation",
+    gradientFrom: "#2563eb",
+    gradientTo: "#0891b2",
+    badgeClass: "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300",
+    title: "Telegram Echo Bot (Node.js)",
     description:
-      "An interactive data science dashboard visualizing sales KPIs, trends, and forecasts — built with Python, Pandas, and a React frontend.",
-    image: "/images/project-3.png",
-    tag: "Data Science",
+      "Node.js implementation of a Telegram echo bot for real-time messaging automation.",
+    stack: ["Node.js", "Telegram Bot API"],
+    image: null,
+    link: "https://github.com/ONOSPETER/telegram-echo-bot",
   },
   {
-    title: "Event Exhibition Campaign",
+    id: "discord",
+    category: "Bot Automation",
+    gradientFrom: "#2563eb",
+    gradientTo: "#0891b2",
+    badgeClass: "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300",
+    title: "Discord Echo Bot",
     description:
-      "Complete graphic design package for a university exhibition: posters, flyers, social media banners, and branded materials delivered in 48 hours.",
-    image: "/images/project-4.png",
-    tag: "Graphic Design",
+      "Discord bot that listens and echoes messages for server automation and testing.",
+    stack: ["Node.js", "Discord.js"],
+    image: "/images/proj-discord.png",
+    link: "https://github.com/ONOSPETER/nodejs-discord-echobot",
   },
+  {
+    id: "peerpump",
+    category: "Crypto & FinTech",
+    gradientFrom: "#d97706",
+    gradientTo: "#c2410c",
+    badgeClass: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300",
+    title: "PeerPumP",
+    description:
+      "Decentralized crypto system focused on peer-based trading and token mechanics.",
+    stack: ["Node.js", "React.js"],
+    image: "/images/proj-peerpump.png",
+    link: "https://github.com/ONOSPETER/PeerPumP",
+  },
+  {
+    id: "cat",
+    category: "Crypto & FinTech",
+    gradientFrom: "#d97706",
+    gradientTo: "#c2410c",
+    badgeClass: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300",
+    title: "CAT – Crypto AI Tax Assistant",
+    description:
+      "AI-assisted tool for analyzing crypto transactions and generating detailed tax reports.",
+    stack: ["Node.js", "React.js", "AI"],
+    image: "/images/proj-cat.png",
+    link: "https://github.com/ONOSPETER/CAT-Crypto-AI-Tax-assistant-",
+  },
+  {
+    id: "blackfly",
+    category: "Crypto & FinTech",
+    gradientFrom: "#d97706",
+    gradientTo: "#c2410c",
+    badgeClass: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300",
+    title: "BlackFly",
+    description:
+      "Crypto automation and utility tool for trading signals and financial systems.",
+    stack: ["Node.js", "React.js"],
+    image: "/images/proj-blackfly.png",
+    link: "https://github.com/ONOSPETER/BlackFly",
+  },
+  {
+    id: "portfolio",
+    category: "Web Applications",
+    gradientFrom: "#16a34a",
+    gradientTo: "#0d9488",
+    badgeClass: "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300",
+    title: "Peter Obiegba Portfolio",
+    description:
+      "Personal developer portfolio website showcasing projects, skills, and services.",
+    stack: ["React.js", "Node.js", "TypeScript"],
+    image: null,
+    link: "https://github.com/ONOSPETER/Peter-Obiegba-Portfolio",
+  },
+  {
+    id: "shadowpost",
+    category: "Privacy & Security",
+    gradientFrom: "#475569",
+    gradientTo: "#1e293b",
+    badgeClass: "bg-slate-100 text-slate-700 dark:bg-slate-700/40 dark:text-slate-300",
+    title: "ShadowPost",
+    description:
+      "Secure anonymous posting system with encrypted, privacy-focused message handling.",
+    stack: ["Node.js", "React.js"],
+    image: "/images/proj-shadowpost.png",
+    link: "https://github.com/ONOSPETER/ShadowPost",
+  },
+  {
+    id: "exercism",
+    category: "Learning & Practice",
+    gradientFrom: "#0d9488",
+    gradientTo: "#0891b2",
+    badgeClass: "bg-teal-100 text-teal-800 dark:bg-teal-900/40 dark:text-teal-300",
+    title: "Exercism Repository",
+    description:
+      "Collection of coding exercises for algorithm practice and software engineering skill development.",
+    stack: ["Python"],
+    image: null,
+    link: "https://github.com/ONOSPETER/Exercism",
+  },
+];
+
+const CATEGORIES: Category[] = [
+  "All",
+  "AI & Computer Vision",
+  "Bot Automation",
+  "Crypto & FinTech",
+  "Web Applications",
+  "Privacy & Security",
+  "Learning & Practice",
 ];
 
 const SERVICES = [
@@ -134,6 +272,24 @@ const SERVICES = [
     learnMore: true,
   },
   {
+    icon: Bitcoin,
+    tag: "Crypto & Web3",
+    title: "Crypto Solutions & DeFi Systems",
+    description:
+      "Decentralized finance tools, crypto trading systems, AI tax assistants, and Web3 integrations built with modern blockchain-ready stacks.",
+    fullWidth: false,
+    learnMore: true,
+  },
+  {
+    icon: Binary,
+    tag: "Algorithms",
+    title: "Algorithm Design & Problem Solving",
+    description:
+      "Custom algorithm development, computational problem solving, and optimization solutions for complex business and data challenges.",
+    fullWidth: false,
+    learnMore: true,
+  },
+  {
     icon: Palette,
     tag: "Design",
     title: "Graphic Design",
@@ -144,31 +300,25 @@ const SERVICES = [
   },
 ];
 
-const TESTIMONIALS = [
-  {
-    name: "Chukwuemeka Obi",
-    role: "Founder at TradePilot",
-    quote:
-      "Peter delivered our inventory system ahead of schedule and it worked perfectly from day one. The UI is clean, the backend is solid. We've been running it for 3 months without a single issue. Genuinely impressed.",
-    image: null,
-  },
-  {
-    name: "Adaeze Nwosu",
-    role: "Marketing Lead at BrandPulse",
-    quote:
-      "We needed graphics for a major campus event — posters, flyers, social posts — in under 48 hours. Peter came through with work that looked like it came from a proper design agency. Everyone kept asking who designed it.",
-    image: null,
-  },
+const GRAPHICS_PLACEHOLDERS = [
+  { bg: "from-purple-600 via-pink-500 to-rose-500", label: "Poster Design" },
+  { bg: "from-blue-600 via-indigo-500 to-violet-600", label: "Social Media Graphics" },
+  { bg: "from-green-500 via-teal-500 to-cyan-500", label: "UI/UX Design" },
+  { bg: "from-orange-500 via-amber-400 to-yellow-400", label: "Flyer Design" },
 ];
 
 function Avatar({ size = 48, className = "" }: { size?: number; className?: string }) {
   return (
     <div
-      className={`rounded-full bg-primary flex items-center justify-center font-bold text-primary-foreground ${className}`}
-      style={{ width: size, height: size, fontSize: size * 0.35 }}
-      data-testid="avatar-initials"
+      className={`rounded-full overflow-hidden border-2 border-primary/30 ${className}`}
+      style={{ width: size, height: size, minWidth: size }}
+      data-testid="avatar"
     >
-      PO
+      <img
+        src="/images/peter.png"
+        alt="Peter Obiegba"
+        className="w-full h-full object-cover object-top"
+      />
     </div>
   );
 }
@@ -199,7 +349,7 @@ function Navbar() {
           <span className="text-foreground">.ng</span>
         </a>
 
-        <div className="hidden md:flex items-center gap-8">
+        <div className="hidden md:flex items-center gap-7">
           {NAV_LINKS.map((link) => (
             <a
               key={link.label}
@@ -212,22 +362,34 @@ function Navbar() {
           ))}
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <button
             onClick={toggleTheme}
             className="h-9 w-9 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             aria-label="Toggle theme"
             data-testid="btn-theme-toggle"
           >
-            {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+            {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
           </button>
 
           <a
+            href="https://www.fiverr.com/s/Ldr0Zxo"
+            target="_blank"
+            rel="noreferrer"
+            className="hidden md:flex items-center gap-1.5 text-sm font-semibold px-3 py-2 rounded-full border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            aria-label="Fiverr"
+            data-testid="nav-fiverr-btn"
+          >
+            <SiFiverr size={14} className="text-[#1dbf73]" />
+            Fiverr
+          </a>
+
+          <a
             href="#contact"
-            className="hidden md:flex items-center gap-2 bg-primary text-primary-foreground text-sm font-semibold px-4 py-2 rounded-full hover:opacity-90 transition-opacity"
+            className="hidden md:flex items-center gap-1.5 bg-primary text-primary-foreground text-sm font-semibold px-4 py-2 rounded-full hover:opacity-90 transition-opacity"
             data-testid="nav-contact-btn"
           >
-            <MessageSquare size={14} />
+            <MessageSquare size={13} />
             Contact
           </a>
 
@@ -260,14 +422,25 @@ function Navbar() {
                 {link.label}
               </a>
             ))}
-            <a
-              href="#contact"
-              className="mt-4 flex items-center justify-center gap-2 bg-primary text-primary-foreground text-sm font-semibold px-4 py-2 rounded-full"
-              onClick={() => setMenuOpen(false)}
-            >
-              <MessageSquare size={14} />
-              Contact
-            </a>
+            <div className="mt-4 flex gap-3">
+              <a
+                href="https://www.fiverr.com/s/Ldr0Zxo"
+                target="_blank"
+                rel="noreferrer"
+                className="flex-1 flex items-center justify-center gap-2 border border-border text-sm font-semibold px-4 py-2.5 rounded-full"
+                onClick={() => setMenuOpen(false)}
+              >
+                <SiFiverr size={14} className="text-[#1dbf73]" />
+                Fiverr
+              </a>
+              <a
+                href="#contact"
+                className="flex-1 flex items-center justify-center gap-2 bg-primary text-primary-foreground text-sm font-semibold px-4 py-2.5 rounded-full"
+                onClick={() => setMenuOpen(false)}
+              >
+                Contact
+              </a>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -276,12 +449,27 @@ function Navbar() {
 }
 
 export default function Home() {
-  const [testimonialIdx, setTestimonialIdx] = useState(0);
+  const [activeCategory, setActiveCategory] = useState<Category>("All");
+  const [graphicsIdx, setGraphicsIdx] = useState(0);
 
-  const prevTestimonial = () =>
-    setTestimonialIdx((i) => (i === 0 ? TESTIMONIALS.length - 1 : i - 1));
-  const nextTestimonial = () =>
-    setTestimonialIdx((i) => (i === TESTIMONIALS.length - 1 ? 0 : i + 1));
+  const filteredProjects =
+    activeCategory === "All"
+      ? PROJECTS
+      : PROJECTS.filter((p) => p.category === activeCategory);
+
+  const nextGraphic = useCallback(() => {
+    setGraphicsIdx((i) => (i + 1) % GRAPHICS_PLACEHOLDERS.length);
+  }, []);
+
+  useEffect(() => {
+    const timer = setInterval(nextGraphic, 3000);
+    return () => clearInterval(timer);
+  }, [nextGraphic]);
+
+  const prevGraphic = () =>
+    setGraphicsIdx((i) =>
+      i === 0 ? GRAPHICS_PLACEHOLDERS.length - 1 : i - 1
+    );
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -291,7 +479,7 @@ export default function Home() {
       <section className="pt-28 pb-16 px-4 sm:px-6 max-w-5xl mx-auto">
         <motion.div initial="hidden" animate="visible" variants={stagger}>
           <motion.div variants={fadeUp}>
-            <Avatar size={64} className="mb-5" />
+            <Avatar size={72} className="mb-5" />
           </motion.div>
 
           <motion.h1
@@ -299,45 +487,55 @@ export default function Home() {
             className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight leading-tight mb-2"
             data-testid="hero-title"
           >
-            Hi, I'm Peter Obiegba.
+            Hi, I'm Peter O.
           </motion.h1>
           <motion.h2
             variants={fadeUp}
-            className="text-2xl sm:text-3xl md:text-4xl font-bold text-muted-foreground mb-5"
+            className="text-xl sm:text-2xl md:text-3xl font-bold text-muted-foreground mb-5"
           >
-            Information Systems Student
+            Information Systems Student & Analyst
           </motion.h2>
 
           <motion.p
             variants={fadeUp}
             className="text-base sm:text-lg text-muted-foreground max-w-xl mb-6 leading-relaxed"
           >
-            I help clients launch web apps, automate data pipelines, and design
-            high-quality graphics — from idea to deployment, fast and right.
+            An information systems analyst dedicated to building efficient systems.
+            I help clients launch web apps, automate data pipelines, build crypto
+            solutions, and design high-quality graphics — from idea to deployment,
+            fast and right.
           </motion.p>
 
           <motion.div variants={fadeUp} className="flex items-center gap-3 mb-8">
-            <span className="text-2xl" role="img" aria-label="Nigeria flag">
-              🇳🇬
-            </span>
+            <span className="text-2xl" role="img" aria-label="Nigeria flag">🇳🇬</span>
             <span className="text-sm text-muted-foreground font-medium">
               Trusted by clients worldwide
             </span>
             <div className="flex text-yellow-400 gap-0.5">
               {[...Array(5)].map((_, i) => (
-                <Star key={i} size={14} fill="currentColor" />
+                <Star key={i} size={13} fill="currentColor" />
               ))}
             </div>
           </motion.div>
 
-          <motion.div variants={fadeUp}>
+          <motion.div variants={fadeUp} className="flex flex-wrap gap-3">
             <a
               href="#contact"
               className="inline-flex items-center gap-2 bg-primary text-primary-foreground font-semibold px-6 py-3 rounded-full hover:opacity-90 transition-opacity text-sm sm:text-base"
               data-testid="hero-cta"
             >
               Let's talk now
-              <ArrowRight size={16} />
+              <ArrowRight size={15} />
+            </a>
+            <a
+              href="https://www.fiverr.com/s/Ldr0Zxo"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 border border-border text-foreground font-semibold px-6 py-3 rounded-full hover:bg-muted transition-colors text-sm sm:text-base"
+              data-testid="hero-fiverr-cta"
+            >
+              <SiFiverr size={15} className="text-[#1dbf73]" />
+              Hire on Fiverr
             </a>
           </motion.div>
         </motion.div>
@@ -364,11 +562,15 @@ export default function Home() {
             >
               <stat.icon
                 size={20}
-                className={`mb-3 ${stat.highlight ? "text-primary-foreground" : "text-primary"}`}
+                className={`mb-3 ${
+                  stat.highlight ? "text-primary-foreground" : "text-primary"
+                }`}
               />
               <p
                 className={`text-xs mb-1 ${
-                  stat.highlight ? "text-primary-foreground/80" : "text-muted-foreground"
+                  stat.highlight
+                    ? "text-primary-foreground/80"
+                    : "text-muted-foreground"
                 }`}
               >
                 {stat.label}
@@ -407,13 +609,22 @@ export default function Home() {
             ))}
           </motion.div>
 
-          <motion.div variants={fadeUp}>
+          <motion.div variants={fadeUp} className="flex flex-wrap justify-center gap-3">
             <a
               href="#contact"
               className="inline-flex items-center gap-2 bg-primary text-primary-foreground font-semibold px-6 py-3 rounded-full hover:opacity-90 transition-opacity"
             >
               Let's talk now
-              <ArrowRight size={16} />
+              <ArrowRight size={15} />
+            </a>
+            <a
+              href="https://www.fiverr.com/s/Ldr0Zxo"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 border border-border bg-background text-foreground font-semibold px-6 py-3 rounded-full hover:bg-muted transition-colors"
+            >
+              <SiFiverr size={15} className="text-[#1dbf73]" />
+              Hire on Fiverr
             </a>
           </motion.div>
         </motion.div>
@@ -427,58 +638,124 @@ export default function Home() {
           viewport={{ once: true }}
           variants={stagger}
         >
-          <motion.div variants={fadeUp} className="text-center mb-4">
-            <h2 className="text-3xl sm:text-4xl font-extrabold">
-              Some projects I've worked on
-            </h2>
-          </motion.div>
+          <motion.h2
+            variants={fadeUp}
+            className="text-3xl sm:text-4xl font-extrabold text-center mb-3"
+          >
+            Some projects I've worked on
+          </motion.h2>
           <motion.p
             variants={fadeUp}
-            className="text-center text-muted-foreground mb-12 max-w-lg mx-auto"
+            className="text-center text-muted-foreground mb-8 max-w-lg mx-auto"
           >
-            Not to brag, but here are a few things I've shipped that I'm proud of.
+            A collection of systems, tools, and apps built across different domains.
           </motion.p>
 
-          <div className="space-y-16">
-            {PROJECTS.map((project) => (
-              <motion.div
-                key={project.title}
-                variants={fadeUp}
-                className="border border-border rounded-2xl overflow-hidden"
-                data-testid={`project-card-${project.title.toLowerCase().replace(/\s+/g, "-")}`}
+          {/* Category filter */}
+          <motion.div
+            variants={fadeUp}
+            className="flex flex-wrap gap-2 justify-center mb-10"
+          >
+            {CATEGORIES.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={`text-xs sm:text-sm font-medium px-4 py-2 rounded-full border transition-colors ${
+                  activeCategory === cat
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "border-border text-muted-foreground hover:text-foreground hover:bg-muted"
+                }`}
+                data-testid={`filter-${cat.toLowerCase().replace(/[\s&]/g, "-")}`}
               >
-                <div className="bg-muted/30 overflow-hidden aspect-video w-full">
-                  <img
-                    src={project.image}
-                    alt={project.title}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="p-6">
-                  <h3 className="text-xl font-bold mb-2">{project.title}</h3>
-                  <p className="text-muted-foreground text-sm mb-5 leading-relaxed">
-                    {project.description}
-                  </p>
-                  <a
-                    href="#"
-                    className="inline-flex items-center gap-2 bg-primary text-primary-foreground font-semibold text-sm px-5 py-2.5 rounded-full hover:opacity-90 transition-opacity"
-                    data-testid={`btn-view-project-${project.title.toLowerCase().replace(/\s+/g, "-")}`}
-                  >
-                    View project: {project.title}
-                    <ArrowRight size={14} />
-                  </a>
-                </div>
-              </motion.div>
+                {cat}
+              </button>
             ))}
-          </div>
+          </motion.div>
+
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeCategory}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.25 }}
+              className="grid grid-cols-1 md:grid-cols-2 gap-6"
+            >
+              {filteredProjects.map((project) => (
+                <div
+                  key={project.id}
+                  className="border border-border rounded-2xl overflow-hidden hover:border-primary/40 transition-colors group"
+                  data-testid={`project-card-${project.id}`}
+                >
+                  {/* Preview */}
+                  <div className="relative aspect-video overflow-hidden">
+                    {project.image ? (
+                      <img
+                        src={project.image}
+                        alt={project.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                    ) : (
+                      <div
+                        className="w-full h-full flex items-center justify-center"
+                        style={{
+                          background: `linear-gradient(135deg, ${project.gradientFrom}, ${project.gradientTo})`,
+                        }}
+                      >
+                        <span className="text-white/30 text-6xl font-black tracking-tighter select-none">
+                          {project.title.slice(0, 2).toUpperCase()}
+                        </span>
+                      </div>
+                    )}
+                    <div className="absolute top-3 left-3">
+                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${project.badgeClass}`}>
+                        {project.category}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Info */}
+                  <div className="p-5">
+                    <h3 className="font-bold text-base mb-1.5">{project.title}</h3>
+                    <p className="text-muted-foreground text-sm leading-relaxed mb-4">
+                      {project.description}
+                    </p>
+                    <div className="flex flex-wrap gap-1.5 mb-4">
+                      {project.stack.map((t) => (
+                        <span
+                          key={t}
+                          className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded"
+                        >
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                    <a
+                      href={project.link}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:gap-2.5 transition-all"
+                      data-testid={`btn-view-project-${project.id}`}
+                    >
+                      View on GitHub
+                      <ExternalLink size={13} />
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </motion.div>
+          </AnimatePresence>
 
           <motion.div variants={fadeUp} className="text-center mt-12">
             <a
-              href="#"
+              href="https://github.com/ONOSPETER"
+              target="_blank"
+              rel="noreferrer"
               className="inline-flex items-center gap-2 border border-primary text-primary font-semibold px-6 py-3 rounded-full hover:bg-primary hover:text-primary-foreground transition-colors"
             >
-              View All Projects
-              <ArrowRight size={16} />
+              <FaGithub size={16} />
+              View All on GitHub
+              <ArrowRight size={15} />
             </a>
           </motion.div>
         </motion.div>
@@ -493,20 +770,24 @@ export default function Home() {
           variants={stagger}
           className="max-w-5xl mx-auto"
         >
-          <motion.div variants={fadeUp} className="text-center mb-4">
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-white">
-              Services I Offer
-            </h2>
-          </motion.div>
+          <motion.h2
+            variants={fadeUp}
+            className="text-3xl sm:text-4xl font-extrabold text-white text-center mb-3"
+          >
+            Services I Offer
+          </motion.h2>
           <motion.p
             variants={fadeUp}
             className="text-center text-slate-400 mb-14 max-w-lg mx-auto"
           >
-            While I offer a wide range of services, here are the top ones to keep
-            things concise and impactful.
+            A wide range of services — here are the key ones that make the most
+            impact.
           </motion.p>
 
-          <motion.div variants={stagger} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <motion.div
+            variants={stagger}
+            className="grid grid-cols-1 md:grid-cols-2 gap-4"
+          >
             {SERVICES.map((service) => (
               <motion.div
                 key={service.title}
@@ -514,15 +795,17 @@ export default function Home() {
                 className={`border border-slate-700 rounded-2xl p-6 hover:border-primary/50 transition-colors ${
                   service.fullWidth ? "md:col-span-2" : ""
                 }`}
-                data-testid={`service-card-${service.title.toLowerCase().replace(/\s+/g, "-")}`}
+                data-testid={`service-card-${service.title
+                  .toLowerCase()
+                  .replace(/[\s&/]/g, "-")}`}
               >
                 <div className="flex items-start justify-between mb-4">
-                  <service.icon size={24} className="text-white" />
+                  <service.icon size={22} className="text-white" />
                   <span className="text-xs font-medium text-primary bg-primary/10 px-2.5 py-1 rounded-full">
                     {service.tag}
                   </span>
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">
+                <h3 className="text-base font-bold text-white mb-2">
                   {service.title}
                 </h3>
                 <p className="text-slate-400 text-sm leading-relaxed mb-4">
@@ -534,7 +817,7 @@ export default function Home() {
                     className="inline-flex items-center gap-1 text-primary text-sm font-semibold hover:gap-2 transition-all"
                   >
                     Learn more
-                    <ArrowRight size={14} />
+                    <ArrowRight size={13} />
                   </a>
                 )}
               </motion.div>
@@ -547,17 +830,14 @@ export default function Home() {
               className="inline-flex items-center gap-2 bg-primary text-primary-foreground font-semibold px-6 py-3 rounded-full hover:opacity-90 transition-opacity"
             >
               Let's talk now
-              <ArrowRight size={16} />
+              <ArrowRight size={15} />
             </a>
           </motion.div>
         </motion.div>
       </section>
 
-      {/* ─── TESTIMONIALS ──────────────────────────────────── */}
-      <section
-        id="testimonials"
-        className="py-20 px-4 sm:px-6 max-w-5xl mx-auto"
-      >
+      {/* ─── GRAPHICS PORTFOLIO ────────────────────────────── */}
+      <section id="graphics" className="py-20 px-4 sm:px-6 max-w-5xl mx-auto">
         <motion.div
           initial="hidden"
           whileInView="visible"
@@ -566,62 +846,94 @@ export default function Home() {
         >
           <motion.h2
             variants={fadeUp}
-            className="text-3xl sm:text-4xl font-extrabold text-center mb-12"
+            className="text-3xl sm:text-4xl font-extrabold text-center mb-3"
           >
-            Amazing Testimonials
+            Graphics Portfolio
           </motion.h2>
-
-          <motion.div
+          <motion.p
             variants={fadeUp}
-            className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center"
+            className="text-center text-muted-foreground mb-12 max-w-lg mx-auto"
           >
-            {/* Photo side */}
-            <div className="flex justify-center">
-              <div className="w-64 h-72 sm:w-72 sm:h-80 rounded-2xl bg-muted overflow-hidden flex items-center justify-center">
-                <Avatar size={100} />
-              </div>
-            </div>
+            A showcase of UI/UX work, poster designs, flyers, and social media
+            graphics.
+          </motion.p>
 
-            {/* Quote side */}
-            <div>
+          <motion.div variants={fadeUp} className="relative">
+            {/* Main slide */}
+            <div className="overflow-hidden rounded-2xl border border-border">
               <AnimatePresence mode="wait">
                 <motion.div
-                  key={testimonialIdx}
-                  initial={{ opacity: 0, x: 20 }}
+                  key={graphicsIdx}
+                  initial={{ opacity: 0, x: 40 }}
                   animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.3 }}
+                  exit={{ opacity: 0, x: -40 }}
+                  transition={{ duration: 0.4 }}
+                  className={`relative aspect-[16/9] bg-gradient-to-br ${GRAPHICS_PLACEHOLDERS[graphicsIdx].bg} flex flex-col items-center justify-center`}
                 >
-                  <h3 className="text-xl font-bold mb-1">
-                    {TESTIMONIALS[testimonialIdx].name}
-                  </h3>
-                  <p className="text-primary font-medium text-sm mb-6">
-                    {TESTIMONIALS[testimonialIdx].role}
+                  <ImageIcon size={56} className="text-white/40 mb-4" />
+                  <p className="text-white/60 text-lg font-semibold">
+                    {GRAPHICS_PLACEHOLDERS[graphicsIdx].label}
                   </p>
-                  <p className="text-muted-foreground leading-relaxed text-base">
-                    {TESTIMONIALS[testimonialIdx].quote}
+                  <p className="text-white/40 text-sm mt-2">
+                    Graphics coming soon — stay tuned
                   </p>
                 </motion.div>
               </AnimatePresence>
+            </div>
 
-              <div className="flex gap-3 mt-8">
+            {/* Navigation arrows */}
+            <button
+              onClick={prevGraphic}
+              className="absolute left-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/80 border border-border flex items-center justify-center text-foreground hover:bg-muted transition-colors shadow-sm"
+              aria-label="Previous"
+              data-testid="btn-prev-graphic"
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <button
+              onClick={nextGraphic}
+              className="absolute right-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:opacity-90 transition-opacity shadow-sm"
+              aria-label="Next"
+              data-testid="btn-next-graphic"
+            >
+              <ChevronRight size={18} />
+            </button>
+
+            {/* Dots */}
+            <div className="flex justify-center gap-2 mt-5">
+              {GRAPHICS_PLACEHOLDERS.map((_, i) => (
                 <button
-                  onClick={prevTestimonial}
-                  className="h-10 w-10 rounded-full border border-primary flex items-center justify-center text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
-                  aria-label="Previous testimonial"
-                  data-testid="btn-prev-testimonial"
-                >
-                  <ChevronLeft size={18} />
-                </button>
+                  key={i}
+                  onClick={() => setGraphicsIdx(i)}
+                  className={`h-2 rounded-full transition-all ${
+                    i === graphicsIdx
+                      ? "w-6 bg-primary"
+                      : "w-2 bg-muted-foreground/30"
+                  }`}
+                  aria-label={`Go to slide ${i + 1}`}
+                />
+              ))}
+            </div>
+
+            {/* Thumbnail strip */}
+            <div className="grid grid-cols-4 gap-3 mt-6">
+              {GRAPHICS_PLACEHOLDERS.map((g, i) => (
                 <button
-                  onClick={nextTestimonial}
-                  className="h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:opacity-90 transition-opacity"
-                  aria-label="Next testimonial"
-                  data-testid="btn-next-testimonial"
+                  key={i}
+                  onClick={() => setGraphicsIdx(i)}
+                  className={`rounded-xl overflow-hidden border-2 transition-colors aspect-video ${
+                    i === graphicsIdx ? "border-primary" : "border-transparent"
+                  }`}
                 >
-                  <ChevronRight size={18} />
+                  <div
+                    className={`w-full h-full bg-gradient-to-br ${g.bg} flex items-center justify-center`}
+                  >
+                    <span className="text-white/60 text-xs font-medium text-center px-1 leading-tight">
+                      {g.label}
+                    </span>
+                  </div>
                 </button>
-              </div>
+              ))}
             </div>
           </motion.div>
         </motion.div>
@@ -651,7 +963,7 @@ export default function Home() {
             Let's work together to bring your ideas to life. Get in touch today
             and let's discuss how I can help you achieve your goals.
           </motion.p>
-          <motion.div variants={fadeUp}>
+          <motion.div variants={fadeUp} className="flex flex-wrap justify-center gap-3">
             <a
               href="https://wa.me/2347055876701"
               target="_blank"
@@ -660,7 +972,17 @@ export default function Home() {
               data-testid="btn-get-started"
             >
               Get Started
-              <ArrowRight size={16} />
+              <ArrowRight size={15} />
+            </a>
+            <a
+              href="https://www.fiverr.com/s/Ldr0Zxo"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 border border-border text-foreground font-semibold px-8 py-3.5 rounded-full hover:bg-muted transition-colors"
+              data-testid="btn-fiverr-cta"
+            >
+              <SiFiverr size={16} className="text-[#1dbf73]" />
+              Order on Fiverr
             </a>
           </motion.div>
         </motion.div>
@@ -675,28 +997,34 @@ export default function Home() {
               <div>
                 <p className="font-bold text-sm">Peter Obiegba</p>
                 <p className="text-xs text-muted-foreground max-w-xs leading-snug">
-                  Building sharp web apps, data tools, and design systems.
-                  Based in Nigeria, working worldwide.
+                  Building sharp web apps, data tools, crypto systems, and design
+                  systems. Based in Nigeria, working worldwide.
                 </p>
               </div>
             </div>
           </div>
 
           <div className="flex flex-wrap gap-x-6 gap-y-2 mb-6 text-sm text-muted-foreground">
-            {["Home", "Projects", "Services", "Contact"].map((link) => (
+            {[
+              { label: "Home", href: "#" },
+              { label: "Projects", href: "#projects" },
+              { label: "Services", href: "#services" },
+              { label: "Graphics", href: "#graphics" },
+              { label: "Contact", href: "#contact" },
+            ].map((link) => (
               <a
-                key={link}
-                href={`#${link.toLowerCase()}`}
+                key={link.label}
+                href={link.href}
                 className="hover:text-foreground transition-colors"
-                data-testid={`footer-link-${link.toLowerCase()}`}
+                data-testid={`footer-link-${link.label.toLowerCase()}`}
               >
-                {link}
+                {link.label}
               </a>
             ))}
           </div>
 
           <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex gap-4">
+            <div className="flex gap-4 items-center">
               <a
                 href="https://github.com/ONOSPETER"
                 target="_blank"
@@ -705,7 +1033,7 @@ export default function Home() {
                 className="text-muted-foreground hover:text-foreground transition-colors"
                 data-testid="footer-social-github"
               >
-                <FaGithub size={20} />
+                <FaGithub size={19} />
               </a>
               <a
                 href="https://x.com/lexlex99722746"
@@ -715,7 +1043,7 @@ export default function Home() {
                 className="text-muted-foreground hover:text-foreground transition-colors"
                 data-testid="footer-social-twitter"
               >
-                <FaTwitter size={20} />
+                <FaTwitter size={19} />
               </a>
               <a
                 href="https://wa.me/2347055876701"
@@ -725,7 +1053,17 @@ export default function Home() {
                 className="text-muted-foreground hover:text-foreground transition-colors"
                 data-testid="footer-social-whatsapp"
               >
-                <FaWhatsapp size={20} />
+                <FaWhatsapp size={19} />
+              </a>
+              <a
+                href="https://www.fiverr.com/s/Ldr0Zxo"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Fiverr"
+                className="text-muted-foreground hover:text-[#1dbf73] transition-colors"
+                data-testid="footer-social-fiverr"
+              >
+                <SiFiverr size={19} />
               </a>
             </div>
 
