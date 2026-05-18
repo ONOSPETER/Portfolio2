@@ -1,0 +1,26 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "npyV-0CuMvQe1D3iVueHz"
+uri = "file://artifacts/portfolio/public/images/project-1.png"
+type = "image"
+title = "landing page website mockup"
+
+[[generated]]
+id = "0aVa56jpX56mq_I3j2Jui"
+uri = "file://artifacts/portfolio/public/images/project-2.png"
+type = "image"
+title = "erp dashboard web app"
+
+[[generated]]
+id = "OKBR6WANAJMOfrAZ0feHl"
+uri = "file://artifacts/portfolio/public/images/project-3.png"
+type = "image"
+title = "data analytics dashboard"
+
+[[generated]]
+id = "t8qSz-z9VsJQmUpHU74Je"
+uri = "file://artifacts/portfolio/public/images/project-4.png"
+type = "image"
+title = "graphic design poster"
