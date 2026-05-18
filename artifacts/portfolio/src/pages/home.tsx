@@ -23,7 +23,6 @@ import {
   ExternalLink,
   Bitcoin,
   Binary,
-  ImageIcon,
 } from "lucide-react";
 import { FaGithub, FaTwitter, FaWhatsapp } from "react-icons/fa";
 import { SiFiverr } from "react-icons/si";
@@ -93,7 +92,7 @@ const PROJECTS: Project[] = [
     description:
       "Real-time computer vision system for target detection, tracking, behavioral analysis, and multi-camera inference.",
     stack: ["Python", "OpenCV", "AI/ML"],
-    image: "/images/proj-iris.png",
+    image: "/images/proj-iris-opt.jpg",
     link: "https://github.com/ONOSPETER/IRIS-Intelligent-Real-time-Imaging-System-",
   },
   {
@@ -132,7 +131,7 @@ const PROJECTS: Project[] = [
     description:
       "Discord bot that listens and echoes messages for server automation and testing.",
     stack: ["Node.js", "Discord.js"],
-    image: "/images/proj-discord.png",
+    image: "/images/proj-discord-opt.jpg",
     link: "https://github.com/ONOSPETER/nodejs-discord-echobot",
   },
   {
@@ -145,7 +144,7 @@ const PROJECTS: Project[] = [
     description:
       "Decentralized crypto system focused on peer-based trading and token mechanics.",
     stack: ["Node.js", "React.js"],
-    image: "/images/proj-peerpump.png",
+    image: "/images/proj-peerpump-opt.jpg",
     link: "https://github.com/ONOSPETER/PeerPumP",
   },
   {
@@ -158,7 +157,7 @@ const PROJECTS: Project[] = [
     description:
       "AI-assisted tool for analyzing crypto transactions and generating detailed tax reports.",
     stack: ["Node.js", "React.js", "AI"],
-    image: "/images/proj-cat.png",
+    image: "/images/proj-cat-opt.jpg",
     link: "https://github.com/ONOSPETER/CAT-Crypto-AI-Tax-assistant-",
   },
   {
@@ -171,7 +170,7 @@ const PROJECTS: Project[] = [
     description:
       "Crypto automation and utility tool for trading signals and financial systems.",
     stack: ["Node.js", "React.js"],
-    image: "/images/proj-blackfly.png",
+    image: "/images/proj-blackfly-opt.jpg",
     link: "https://github.com/ONOSPETER/BlackFly",
   },
   {
@@ -197,7 +196,7 @@ const PROJECTS: Project[] = [
     description:
       "Secure anonymous posting system with encrypted, privacy-focused message handling.",
     stack: ["Node.js", "React.js"],
-    image: "/images/proj-shadowpost.png",
+    image: "/images/proj-shadowpost-opt.jpg",
     link: "https://github.com/ONOSPETER/ShadowPost",
   },
   {
@@ -300,14 +299,23 @@ const SERVICES = [
   },
 ];
 
-const GRAPHICS_PLACEHOLDERS = [
-  { bg: "from-purple-600 via-pink-500 to-rose-500", label: "Poster Design" },
-  { bg: "from-blue-600 via-indigo-500 to-violet-600", label: "Social Media Graphics" },
-  { bg: "from-green-500 via-teal-500 to-cyan-500", label: "UI/UX Design" },
-  { bg: "from-orange-500 via-amber-400 to-yellow-400", label: "Flyer Design" },
+const GRAPHICS = [
+  { src: "/images/graphic-valentine-opt.jpg", label: "Valentine's Day Campaign", client: "Phonify Communications" },
+  { src: "/images/graphic-xmas-opt.jpg", label: "Christmas Promo Poster", client: "Phonify Communications" },
+  { src: "/images/graphic-easter-opt.jpg", label: "Easter Day Greeting", client: "Phonify Communications" },
+  { src: "/images/graphic-december-opt.jpg", label: "Hello December Poster", client: "Phonify Communications" },
+  { src: "/images/graphic-november-opt.jpg", label: "Hello November Flyer", client: "Phonify Communications" },
 ];
 
-function Avatar({ size = 48, className = "" }: { size?: number; className?: string }) {
+function Avatar({
+  size = 48,
+  className = "",
+  priority = false,
+}: {
+  size?: number;
+  className?: string;
+  priority?: boolean;
+}) {
   return (
     <div
       className={`rounded-full overflow-hidden border-2 border-primary/30 ${className}`}
@@ -315,9 +323,14 @@ function Avatar({ size = 48, className = "" }: { size?: number; className?: stri
       data-testid="avatar"
     >
       <img
-        src="/images/peter.png"
+        src="/images/peter-opt.jpg"
         alt="Peter Obiegba"
+        width={size * 2}
+        height={size * 2}
         className="w-full h-full object-cover object-top"
+        loading={priority ? "eager" : "lazy"}
+        decoding={priority ? "sync" : "async"}
+        fetchPriority={priority ? "high" : "auto"}
       />
     </div>
   );
@@ -458,18 +471,16 @@ export default function Home() {
       : PROJECTS.filter((p) => p.category === activeCategory);
 
   const nextGraphic = useCallback(() => {
-    setGraphicsIdx((i) => (i + 1) % GRAPHICS_PLACEHOLDERS.length);
+    setGraphicsIdx((i) => (i + 1) % GRAPHICS.length);
   }, []);
 
   useEffect(() => {
-    const timer = setInterval(nextGraphic, 3000);
+    const timer = setInterval(nextGraphic, 3500);
     return () => clearInterval(timer);
   }, [nextGraphic]);
 
   const prevGraphic = () =>
-    setGraphicsIdx((i) =>
-      i === 0 ? GRAPHICS_PLACEHOLDERS.length - 1 : i - 1
-    );
+    setGraphicsIdx((i) => (i === 0 ? GRAPHICS.length - 1 : i - 1));
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -479,7 +490,7 @@ export default function Home() {
       <section className="pt-28 pb-16 px-4 sm:px-6 max-w-5xl mx-auto">
         <motion.div initial="hidden" animate="visible" variants={stagger}>
           <motion.div variants={fadeUp}>
-            <Avatar size={72} className="mb-5" />
+            <Avatar size={72} className="mb-5" priority />
           </motion.div>
 
           <motion.h1
@@ -860,23 +871,27 @@ export default function Home() {
 
           <motion.div variants={fadeUp} className="relative">
             {/* Main slide */}
-            <div className="overflow-hidden rounded-2xl border border-border">
+            <div className="overflow-hidden rounded-2xl border border-border bg-muted/30">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={graphicsIdx}
                   initial={{ opacity: 0, x: 40 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -40 }}
-                  transition={{ duration: 0.4 }}
-                  className={`relative aspect-[16/9] bg-gradient-to-br ${GRAPHICS_PLACEHOLDERS[graphicsIdx].bg} flex flex-col items-center justify-center`}
+                  transition={{ duration: 0.35 }}
+                  className="relative"
                 >
-                  <ImageIcon size={56} className="text-white/40 mb-4" />
-                  <p className="text-white/60 text-lg font-semibold">
-                    {GRAPHICS_PLACEHOLDERS[graphicsIdx].label}
-                  </p>
-                  <p className="text-white/40 text-sm mt-2">
-                    Graphics coming soon — stay tuned
-                  </p>
+                  <img
+                    src={GRAPHICS[graphicsIdx].src}
+                    alt={GRAPHICS[graphicsIdx].label}
+                    className="w-full max-h-[520px] object-contain mx-auto block"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent px-5 py-4">
+                    <p className="text-white font-semibold text-sm">{GRAPHICS[graphicsIdx].label}</p>
+                    <p className="text-white/70 text-xs">{GRAPHICS[graphicsIdx].client}</p>
+                  </div>
                 </motion.div>
               </AnimatePresence>
             </div>
@@ -884,7 +899,7 @@ export default function Home() {
             {/* Navigation arrows */}
             <button
               onClick={prevGraphic}
-              className="absolute left-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/80 border border-border flex items-center justify-center text-foreground hover:bg-muted transition-colors shadow-sm"
+              className="absolute left-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/90 border border-border flex items-center justify-center text-foreground hover:bg-muted transition-colors shadow-md"
               aria-label="Previous"
               data-testid="btn-prev-graphic"
             >
@@ -892,7 +907,7 @@ export default function Home() {
             </button>
             <button
               onClick={nextGraphic}
-              className="absolute right-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:opacity-90 transition-opacity shadow-sm"
+              className="absolute right-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:opacity-90 transition-opacity shadow-md"
               aria-label="Next"
               data-testid="btn-next-graphic"
             >
@@ -901,14 +916,12 @@ export default function Home() {
 
             {/* Dots */}
             <div className="flex justify-center gap-2 mt-5">
-              {GRAPHICS_PLACEHOLDERS.map((_, i) => (
+              {GRAPHICS.map((_, i) => (
                 <button
                   key={i}
                   onClick={() => setGraphicsIdx(i)}
                   className={`h-2 rounded-full transition-all ${
-                    i === graphicsIdx
-                      ? "w-6 bg-primary"
-                      : "w-2 bg-muted-foreground/30"
+                    i === graphicsIdx ? "w-6 bg-primary" : "w-2 bg-muted-foreground/30"
                   }`}
                   aria-label={`Go to slide ${i + 1}`}
                 />
@@ -916,22 +929,22 @@ export default function Home() {
             </div>
 
             {/* Thumbnail strip */}
-            <div className="grid grid-cols-4 gap-3 mt-6">
-              {GRAPHICS_PLACEHOLDERS.map((g, i) => (
+            <div className="grid grid-cols-5 gap-2 mt-5">
+              {GRAPHICS.map((g, i) => (
                 <button
                   key={i}
                   onClick={() => setGraphicsIdx(i)}
-                  className={`rounded-xl overflow-hidden border-2 transition-colors aspect-video ${
-                    i === graphicsIdx ? "border-primary" : "border-transparent"
+                  className={`rounded-lg overflow-hidden border-2 transition-colors aspect-square ${
+                    i === graphicsIdx ? "border-primary" : "border-transparent opacity-60 hover:opacity-100"
                   }`}
                 >
-                  <div
-                    className={`w-full h-full bg-gradient-to-br ${g.bg} flex items-center justify-center`}
-                  >
-                    <span className="text-white/60 text-xs font-medium text-center px-1 leading-tight">
-                      {g.label}
-                    </span>
-                  </div>
+                  <img
+                    src={g.src}
+                    alt={g.label}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                    decoding="async"
+                  />
                 </button>
               ))}
             </div>
