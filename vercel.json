@@ -2,7 +2,7 @@
   "framework": null,
   "installCommand": "npm install -g pnpm@10 && pnpm install --frozen-lockfile",
   "buildCommand": "pnpm --filter @workspace/portfolio run build:vercel",
-  "outputDirectory": "artifacts/portfolio/dist",
+  "outputDirectory": "vercel-out",
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ]
