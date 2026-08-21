@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: portfolio
+    description: Public portfolio feed operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,25 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /portfolio/feed:
+    get:
+      operationId: getPortfolioFeed
+      tags: [portfolio]
+      summary: Get live portfolio content
+      description: Fetches public GitHub repositories, Medium articles, and ResearchGate profile metadata.
+      responses:
+        "200":
+          description: Live portfolio content
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PortfolioFeed"
+        "502":
+          description: Upstream source unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PortfolioFeed"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +54,129 @@ components:
           type: string
       required:
         - status
+    PortfolioFeed:
+      type: object
+      properties:
+        updatedAt:
+          type: string
+          format: date-time
+        github:
+          $ref: "#/components/schemas/GitHubFeed"
+        medium:
+          $ref: "#/components/schemas/MediumFeed"
+        researchgate:
+          $ref: "#/components/schemas/ResearchGateFeed"
+      required:
+        - updatedAt
+        - github
+        - medium
+        - researchgate
+    GitHubFeed:
+      type: object
+      properties:
+        username:
+          type: string
+        profileUrl:
+          type: string
+          format: uri
+        repositories:
+          type: array
+          items:
+            $ref: "#/components/schemas/GitHubRepository"
+      required:
+        - username
+        - profileUrl
+        - repositories
+    GitHubRepository:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        url:
+          type: string
+          format: uri
+        language:
+          type: string
+          nullable: true
+        stars:
+          type: integer
+        forks:
+          type: integer
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - name
+        - description
+        - url
+        - language
+        - stars
+        - forks
+        - updatedAt
+    MediumFeed:
+      type: object
+      properties:
+        profileUrl:
+          type: string
+          format: uri
+        articles:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediumArticle"
+      required:
+        - profileUrl
+        - articles
+    MediumArticle:
+      type: object
+      properties:
+        title:
+          type: string
+        url:
+          type: string
+          format: uri
+        excerpt:
+          type: string
+        publishedAt:
+          type: string
+          format: date-time
+        readingMinutes:
+          type: integer
+      required:
+        - title
+        - url
+        - excerpt
+        - publishedAt
+        - readingMinutes
+    ResearchGateFeed:
+      type: object
+      properties:
+        name:
+          type: string
+        profileUrl:
+          type: string
+          format: uri
+        affiliation:
+          type: string
+        publications:
+          type: integer
+        reads:
+          type: integer
+        citations:
+          type: integer
+        about:
+          type: string
+        available:
+          type: boolean
+      required:
+        - name
+        - profileUrl
+        - affiliation
+        - publications
+        - reads
+        - citations
+        - about
+        - available
 

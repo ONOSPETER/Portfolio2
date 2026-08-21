@@ -1,0 +1,1 @@
+- [Public profile feeds](public-profile-feeds.md) — GitHub and Medium are reliably public; ResearchGate needs graceful fallback metadata.

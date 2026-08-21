@@ -1,1091 +1,514 @@
-import { useState, useEffect, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { AnimatePresence, motion, type Variants } from "framer-motion";
 import {
+  ArrowDownRight,
   ArrowRight,
-  Sun,
-  Moon,
-  Menu,
-  X,
-  TrendingUp,
-  FolderOpen,
-  Clock,
-  Award,
-  Monitor,
-  BarChart2,
-  Palette,
-  Code2,
+  ArrowUpRight,
+  BookOpen,
+  CalendarDays,
   ChevronLeft,
   ChevronRight,
-  Zap,
-  Globe,
-  Star,
-  MessageSquare,
+  Code2,
   ExternalLink,
-  Bitcoin,
-  Binary,
+  Github,
+  Globe2,
+  Layers3,
+  Mail,
+  Menu,
+  Moon,
+  Orbit,
+  PenLine,
+  Radio,
+  Sparkles,
+  Sun,
+  X,
 } from "lucide-react";
-import { FaGithub, FaTwitter, FaWhatsapp } from "react-icons/fa";
-import { SiFiverr } from "react-icons/si";
+import { useGetPortfolioFeed } from "@workspace/api-client-react";
 import { useTheme } from "@/hooks/use-theme";
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 24 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
+const reveal: Variants = {
+  hidden: { opacity: 0, y: 22 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.55, ease: "easeOut" } },
 };
 
-const stagger = {
+const revealGroup: Variants = {
   hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.08 } },
+  visible: { opacity: 1, transition: { staggerChildren: 0.09 } },
 };
 
-const NAV_LINKS = [
-  { label: "Projects", href: "#projects" },
+const navItems = [
+  { label: "Work", href: "#work" },
+  { label: "Research", href: "#research" },
+  { label: "Writing", href: "#writing" },
   { label: "Services", href: "#services" },
-  { label: "Graphics", href: "#graphics" },
-  { label: "Contact", href: "#contact" },
 ];
 
-const STATS = [
-  { icon: TrendingUp, label: "Success rate", value: "95%", highlight: false },
-  { icon: FolderOpen, label: "Total Projects", value: "3+", highlight: false },
-  { icon: Clock, label: "Avg. Delivery Time", value: "2 weeks", highlight: false },
-  { icon: Award, label: "Experience", value: "1.5+ yrs", highlight: true },
+const graphicWork = [
+  { src: "/images/graphic-valentine-opt.jpg", title: "Valentine's campaign", year: "2025" },
+  { src: "/images/graphic-xmas-opt.jpg", title: "Holiday retail system", year: "2025" },
+  { src: "/images/graphic-easter-opt.jpg", title: "Easter day greeting", year: "2025" },
+  { src: "/images/graphic-december-opt.jpg", title: "Hello December identity", year: "2025" },
+  { src: "/images/graphic-november-opt.jpg", title: "Monthly social campaign", year: "2025" },
 ];
 
-const PROOF_STATS = [
-  { value: "5+", label: "Years Coding" },
-  { value: "1.5+", label: "Years Experience" },
-  { value: "10+", label: "Projects Built" },
-  { value: "2", label: "Research Papers" },
+const repoArtwork: Record<string, string> = {
+  iris: "/images/proj-iris-opt.jpg",
+  "crypto-ai-tax-assistant": "/images/proj-cat-opt.jpg",
+  cat: "/images/proj-cat-opt.jpg",
+  peerpump: "/images/proj-peerpump-opt.jpg",
+  blackfly: "/images/proj-peerpump-opt.jpg",
+  shadowpost: "/images/proj-shadowpost-opt.jpg",
+  discord: "/images/proj-discord-opt.jpg",
+};
+
+const services = [
+  {
+    number: "01",
+    icon: Code2,
+    title: "Web applications",
+    body: "Interfaces and internal tools that turn messy operations into a clear daily workflow.",
+    tags: ["React", "TypeScript", "Node.js"],
+    accent: "teal",
+  },
+  {
+    number: "02",
+    icon: Orbit,
+    title: "Autonomous systems",
+    body: "Computer vision, bot automation, and experiments that let software sense, decide, and respond.",
+    tags: ["Python", "OpenCV", "APIs"],
+    accent: "coral",
+  },
+  {
+    number: "03",
+    icon: Layers3,
+    title: "Data & crypto tools",
+    body: "Pipelines, dashboards, DeFi utilities, and tax tooling with a bias for useful evidence.",
+    tags: ["ETL", "AI/ML", "Web3"],
+    accent: "blue",
+  },
+  {
+    number: "04",
+    icon: PenLine,
+    title: "Research & visual work",
+    body: "Technical writing and graphic systems that make an idea easier to inspect, share, and trust.",
+    tags: ["Research", "Reports", "Design"],
+    accent: "orange",
+  },
 ];
 
-type Category =
-  | "All"
-  | "AI & Computer Vision"
-  | "Bot Automation"
-  | "Crypto & FinTech"
-  | "Web Applications"
-  | "Privacy & Security"
-  | "Learning & Practice";
-
-interface Project {
-  id: string;
-  category: Category;
-  gradientFrom: string;
-  gradientTo: string;
-  badgeClass: string;
-  title: string;
-  description: string;
-  stack: string[];
-  image: string | null;
-  link: string;
+function formatDate(dateString?: string) {
+  if (!dateString) return "Date unavailable";
+  const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) return dateString;
+  return new Intl.DateTimeFormat("en", { month: "short", year: "numeric" }).format(date);
 }
 
-const PROJECTS: Project[] = [
-  {
-    id: "iris",
-    category: "AI & Computer Vision",
-    gradientFrom: "#6d28d9",
-    gradientTo: "#3730a3",
-    badgeClass: "bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300",
-    title: "IRIS – Intelligent Real-time Imaging System",
-    description:
-      "Real-time computer vision system for target detection, tracking, behavioral analysis, and multi-camera inference.",
-    stack: ["Python", "OpenCV", "AI/ML"],
-    image: "/images/proj-iris-opt.jpg",
-    link: "https://github.com/ONOSPETER/IRIS-Intelligent-Real-time-Imaging-System-",
-  },
-  {
-    id: "telegram-py",
-    category: "Bot Automation",
-    gradientFrom: "#2563eb",
-    gradientTo: "#0891b2",
-    badgeClass: "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300",
-    title: "Telegram Echo Bot (Python)",
-    description:
-      "Telegram bot that echoes user messages for testing and automation purposes.",
-    stack: ["Python", "Telegram Bot API"],
-    image: null,
-    link: "https://github.com/ONOSPETER/telegram-echo-bot",
-  },
-  {
-    id: "telegram-node",
-    category: "Bot Automation",
-    gradientFrom: "#2563eb",
-    gradientTo: "#0891b2",
-    badgeClass: "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300",
-    title: "Telegram Echo Bot (Node.js)",
-    description:
-      "Node.js implementation of a Telegram echo bot for real-time messaging automation.",
-    stack: ["Node.js", "Telegram Bot API"],
-    image: null,
-    link: "https://github.com/ONOSPETER/telegram-echo-bot",
-  },
-  {
-    id: "discord",
-    category: "Bot Automation",
-    gradientFrom: "#2563eb",
-    gradientTo: "#0891b2",
-    badgeClass: "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300",
-    title: "Discord Echo Bot",
-    description:
-      "Discord bot that listens and echoes messages for server automation and testing.",
-    stack: ["Node.js", "Discord.js"],
-    image: "/images/proj-discord-opt.jpg",
-    link: "https://github.com/ONOSPETER/nodejs-discord-echobot",
-  },
-  {
-    id: "peerpump",
-    category: "Crypto & FinTech",
-    gradientFrom: "#d97706",
-    gradientTo: "#c2410c",
-    badgeClass: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300",
-    title: "PeerPumP",
-    description:
-      "Decentralized crypto system focused on peer-based trading and token mechanics.",
-    stack: ["Node.js", "React.js"],
-    image: "/images/proj-peerpump-opt.jpg",
-    link: "https://github.com/ONOSPETER/PeerPumP",
-  },
-  {
-    id: "cat",
-    category: "Crypto & FinTech",
-    gradientFrom: "#d97706",
-    gradientTo: "#c2410c",
-    badgeClass: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300",
-    title: "CAT – Crypto AI Tax Assistant",
-    description:
-      "AI-assisted tool for analyzing crypto transactions and generating detailed tax reports.",
-    stack: ["Node.js", "React.js", "AI"],
-    image: "/images/proj-cat-opt.jpg",
-    link: "https://github.com/ONOSPETER/CAT-Crypto-AI-Tax-assistant-",
-  },
-  {
-    id: "blackfly",
-    category: "Crypto & FinTech",
-    gradientFrom: "#d97706",
-    gradientTo: "#c2410c",
-    badgeClass: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300",
-    title: "BlackFly",
-    description:
-      "Crypto automation and utility tool for trading signals and financial systems.",
-    stack: ["Node.js", "React.js"],
-    image: "/images/proj-blackfly-opt.jpg",
-    link: "https://github.com/ONOSPETER/BlackFly",
-  },
-  {
-    id: "portfolio",
-    category: "Web Applications",
-    gradientFrom: "#16a34a",
-    gradientTo: "#0d9488",
-    badgeClass: "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300",
-    title: "Peter Obiegba Portfolio",
-    description:
-      "Personal developer portfolio website showcasing projects, skills, and services.",
-    stack: ["React.js", "Node.js", "TypeScript"],
-    image: null,
-    link: "https://github.com/ONOSPETER/Peter-Obiegba-Portfolio",
-  },
-  {
-    id: "shadowpost",
-    category: "Privacy & Security",
-    gradientFrom: "#475569",
-    gradientTo: "#1e293b",
-    badgeClass: "bg-slate-100 text-slate-700 dark:bg-slate-700/40 dark:text-slate-300",
-    title: "ShadowPost",
-    description:
-      "Secure anonymous posting system with encrypted, privacy-focused message handling.",
-    stack: ["Node.js", "React.js"],
-    image: "/images/proj-shadowpost-opt.jpg",
-    link: "https://github.com/ONOSPETER/ShadowPost",
-  },
-  {
-    id: "exercism",
-    category: "Learning & Practice",
-    gradientFrom: "#0d9488",
-    gradientTo: "#0891b2",
-    badgeClass: "bg-teal-100 text-teal-800 dark:bg-teal-900/40 dark:text-teal-300",
-    title: "Exercism Repository",
-    description:
-      "Collection of coding exercises for algorithm practice and software engineering skill development.",
-    stack: ["Python"],
-    image: null,
-    link: "https://github.com/ONOSPETER/Exercism",
-  },
-];
+function compactNumber(value: number) {
+  return new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 }).format(value);
+}
 
-const CATEGORIES: Category[] = [
-  "All",
-  "AI & Computer Vision",
-  "Bot Automation",
-  "Crypto & FinTech",
-  "Web Applications",
-  "Privacy & Security",
-  "Learning & Practice",
-];
+function initials(value: string) {
+  return value
+    .split(/[\s_-]+/)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("");
+}
 
-const SERVICES = [
-  {
-    icon: Monitor,
-    tag: "Web Development",
-    title: "Landing Page Development",
-    description:
-      "Clean, fast, and conversion-focused landing pages built with modern frameworks. From design to deployment in days.",
-    fullWidth: true,
-    learnMore: true,
-  },
-  {
-    icon: Code2,
-    tag: "Business",
-    title: "ERP Web Applications",
-    description:
-      "Small-scale enterprise resource planning web apps that streamline operations — inventory, HR, billing, and reporting all in one place.",
-    fullWidth: false,
-    learnMore: true,
-  },
-  {
-    icon: Zap,
-    tag: "Automation",
-    title: "Data Automation Pipelines",
-    description:
-      "Custom scripts and ETL pipelines that extract, clean, and route data automatically — saving hours of manual work every week.",
-    fullWidth: false,
-    learnMore: true,
-  },
-  {
-    icon: Globe,
-    tag: "Design & Development",
-    title: "Website Design & Development",
-    description:
-      "Modern, responsive websites that convert visitors into customers.",
-    fullWidth: true,
-    learnMore: false,
-  },
-  {
-    icon: BarChart2,
-    tag: "AI & Data",
-    title: "Data Science & AI/ML",
-    description:
-      "Turn raw data into insight. Statistical analysis, visualizations, predictive models, and AI integrations tailored to your use case.",
-    fullWidth: false,
-    learnMore: true,
-  },
-  {
-    icon: Bitcoin,
-    tag: "Crypto & Web3",
-    title: "Crypto Solutions & DeFi Systems",
-    description:
-      "Decentralized finance tools, crypto trading systems, AI tax assistants, and Web3 integrations built with modern blockchain-ready stacks.",
-    fullWidth: false,
-    learnMore: true,
-  },
-  {
-    icon: Binary,
-    tag: "Algorithms",
-    title: "Algorithm Design & Problem Solving",
-    description:
-      "Custom algorithm development, computational problem solving, and optimization solutions for complex business and data challenges.",
-    fullWidth: false,
-    learnMore: true,
-  },
-  {
-    icon: Palette,
-    tag: "Design",
-    title: "Graphic Design",
-    description:
-      "UI/UX design, posters, flyers, and social media graphics. Design that looks great and communicates clearly.",
-    fullWidth: false,
-    learnMore: false,
-  },
-];
+function artworkForRepo(name: string) {
+  const key = name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  const match = Object.entries(repoArtwork).find(([slug]) => key.includes(slug) || slug.includes(key));
+  return match?.[1];
+}
 
-const GRAPHICS = [
-  { src: "/images/graphic-valentine-opt.jpg", label: "Valentine's Day Campaign", client: "Phonify Communications" },
-  { src: "/images/graphic-xmas-opt.jpg", label: "Christmas Promo Poster", client: "Phonify Communications" },
-  { src: "/images/graphic-easter-opt.jpg", label: "Easter Day Greeting", client: "Phonify Communications" },
-  { src: "/images/graphic-december-opt.jpg", label: "Hello December Poster", client: "Phonify Communications" },
-  { src: "/images/graphic-november-opt.jpg", label: "Hello November Flyer", client: "Phonify Communications" },
-];
-
-function Avatar({
-  size = 48,
+function ExternalAnchor({
+  href,
+  children,
   className = "",
-  priority = false,
+  testId,
 }: {
-  size?: number;
+  href: string;
+  children: ReactNode;
   className?: string;
-  priority?: boolean;
+  testId: string;
 }) {
   return (
-    <div
-      className={`rounded-full overflow-hidden border-2 border-primary/30 ${className}`}
-      style={{ width: size, height: size, minWidth: size }}
-      data-testid="avatar"
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className={className}
+      data-testid={testId}
     >
-      <img
-        src="/images/peter-opt.jpg"
-        alt="Peter Obiegba"
-        width={size * 2}
-        height={size * 2}
-        className="w-full h-full object-cover object-top"
-        loading={priority ? "eager" : "lazy"}
-        decoding={priority ? "sync" : "async"}
-        fetchPriority={priority ? "high" : "auto"}
-      />
+      {children}
+    </a>
+  );
+}
+
+function Avatar({ size = "large" }: { size?: "small" | "large" }) {
+  return (
+    <div className={size === "large" ? "avatar avatar-large" : "avatar avatar-small"} data-testid="img-avatar">
+      <img src="/images/peter-opt.jpg" alt="Peter Obiegba" loading={size === "large" ? "eager" : "lazy"} />
     </div>
   );
 }
 
 function Navbar() {
   const { theme, toggleTheme } = useTheme();
-  const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const handler = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", handler);
-    return () => window.removeEventListener("scroll", handler);
+    const onScroll = () => setScrolled(window.scrollY > 32);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   return (
-    <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? "bg-background/95 backdrop-blur border-b border-border shadow-sm"
-          : "bg-background/80 backdrop-blur"
-      }`}
-      data-testid="navbar"
-    >
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-        <a href="#" className="font-bold text-lg" data-testid="nav-logo">
-          <span className="text-primary">Peter</span>
-          <span className="text-foreground">.ng</span>
+    <header className={`site-header ${scrolled ? "site-header-scrolled" : ""}`} data-testid="navbar">
+      <div className="nav-shell">
+        <a href="#" className="brand" data-testid="link-home">
+          <span className="brand-mark">PO</span>
+          <span>peter<span className="brand-dot">.</span>ng</span>
         </a>
-
-        <div className="hidden md:flex items-center gap-7">
-          {NAV_LINKS.map((link) => (
-            <a
-              key={link.label}
-              href={link.href}
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-              data-testid={`nav-link-${link.label.toLowerCase()}`}
-            >
-              {link.label}
+        <nav className="desktop-nav" aria-label="Primary navigation">
+          {navItems.map((item) => (
+            <a href={item.href} key={item.href} data-testid={`link-nav-${item.label.toLowerCase()}`}>
+              {item.label}
             </a>
           ))}
-        </div>
-
-        <div className="flex items-center gap-2">
+        </nav>
+        <div className="nav-actions">
           <button
+            type="button"
             onClick={toggleTheme}
-            className="h-9 w-9 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-            aria-label="Toggle theme"
-            data-testid="btn-theme-toggle"
+            className="icon-button"
+            aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+            data-testid="button-theme-toggle"
           >
-            {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
+            {theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
           </button>
-
-          <a
-            href="https://www.fiverr.com/s/Ldr0Zxo"
-            target="_blank"
-            rel="noreferrer"
-            className="hidden md:flex items-center gap-1.5 text-sm font-semibold px-3 py-2 rounded-full border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-            aria-label="Fiverr"
-            data-testid="nav-fiverr-btn"
-          >
-            <SiFiverr size={14} className="text-[#1dbf73]" />
-            Fiverr
+          <a href="#contact" className="nav-contact" data-testid="link-nav-contact">
+            Start a conversation <ArrowRight size={14} />
           </a>
-
-          <a
-            href="#contact"
-            className="hidden md:flex items-center gap-1.5 bg-primary text-primary-foreground text-sm font-semibold px-4 py-2 rounded-full hover:opacity-90 transition-opacity"
-            data-testid="nav-contact-btn"
-          >
-            <MessageSquare size={13} />
-            Contact
-          </a>
-
           <button
-            className="md:hidden h-9 w-9 flex items-center justify-center text-foreground"
-            onClick={() => setMenuOpen(!menuOpen)}
-            aria-label="Toggle menu"
-            data-testid="btn-menu-toggle"
+            type="button"
+            className="mobile-menu-button icon-button"
+            onClick={() => setMenuOpen((open) => !open)}
+            aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
+            aria-expanded={menuOpen}
+            data-testid="button-menu-toggle"
           >
-            {menuOpen ? <X size={20} /> : <Menu size={20} />}
+            {menuOpen ? <X size={19} /> : <Menu size={19} />}
           </button>
         </div>
       </div>
-
       <AnimatePresence>
         {menuOpen && (
-          <motion.div
+          <motion.nav
+            className="mobile-nav"
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden bg-background border-b border-border px-4 pb-4"
+            aria-label="Mobile navigation"
           >
-            {NAV_LINKS.map((link) => (
-              <a
-                key={link.label}
-                href={link.href}
-                className="block py-3 text-sm font-medium text-muted-foreground hover:text-foreground border-b border-border/50 last:border-0"
-                onClick={() => setMenuOpen(false)}
-              >
-                {link.label}
+            {navItems.map((item) => (
+              <a href={item.href} key={item.href} onClick={() => setMenuOpen(false)} data-testid={`link-mobile-${item.label.toLowerCase()}`}>
+                {item.label} <ArrowDownRight size={15} />
               </a>
             ))}
-            <div className="mt-4 flex gap-3">
-              <a
-                href="https://www.fiverr.com/s/Ldr0Zxo"
-                target="_blank"
-                rel="noreferrer"
-                className="flex-1 flex items-center justify-center gap-2 border border-border text-sm font-semibold px-4 py-2.5 rounded-full"
-                onClick={() => setMenuOpen(false)}
-              >
-                <SiFiverr size={14} className="text-[#1dbf73]" />
-                Fiverr
-              </a>
-              <a
-                href="#contact"
-                className="flex-1 flex items-center justify-center gap-2 bg-primary text-primary-foreground text-sm font-semibold px-4 py-2.5 rounded-full"
-                onClick={() => setMenuOpen(false)}
-              >
-                Contact
-              </a>
-            </div>
-          </motion.div>
+            <a href="#contact" onClick={() => setMenuOpen(false)} data-testid="link-mobile-contact">
+              Start a conversation <ArrowRight size={15} />
+            </a>
+          </motion.nav>
         )}
       </AnimatePresence>
-    </nav>
+    </header>
+  );
+}
+
+function LoadingState() {
+  return (
+    <div className="loading-panel" aria-label="Loading live portfolio data" data-testid="status-loading">
+      <div className="skeleton-line skeleton-short" />
+      <div className="skeleton-line" />
+      <div className="skeleton-line skeleton-medium" />
+      <span className="font-mono loading-copy">syncing live sources…</span>
+    </div>
   );
 }
 
 export default function Home() {
-  const [activeCategory, setActiveCategory] = useState<Category>("All");
-  const [graphicsIdx, setGraphicsIdx] = useState(0);
+  const data = useGetPortfolioFeed();
+  const { isLoading, isError, refetch } = data;
+  const feed = data.data;
+  const [graphicIndex, setGraphicIndex] = useState(0);
+  const [repoFilter, setRepoFilter] = useState("All");
 
-  const filteredProjects =
-    activeCategory === "All"
-      ? PROJECTS
-      : PROJECTS.filter((p) => p.category === activeCategory);
+  const repositories = feed?.github?.repositories ?? [];
+  const languages = useMemo(
+    () => ["All", ...Array.from(new Set(repositories.map((repo) => repo.language).filter(Boolean) as string[]))],
+    [repositories],
+  );
+  const filteredRepositories = repoFilter === "All"
+    ? repositories
+    : repositories.filter((repo) => repo.language === repoFilter);
 
-  const nextGraphic = useCallback(() => {
-    setGraphicsIdx((i) => (i + 1) % GRAPHICS.length);
+  const showNextGraphic = useCallback(() => {
+    setGraphicIndex((index) => (index + 1) % graphicWork.length);
+  }, []);
+  const showPreviousGraphic = useCallback(() => {
+    setGraphicIndex((index) => (index - 1 + graphicWork.length) % graphicWork.length);
   }, []);
 
   useEffect(() => {
-    const timer = setInterval(nextGraphic, 3500);
-    return () => clearInterval(timer);
-  }, [nextGraphic]);
+    const timer = window.setInterval(showNextGraphic, 6000);
+    return () => window.clearInterval(timer);
+  }, [showNextGraphic]);
 
-  const prevGraphic = () =>
-    setGraphicsIdx((i) => (i === 0 ? GRAPHICS.length - 1 : i - 1));
+  const research = feed?.researchgate;
+  const hasPartialData = Boolean(feed && (!feed.github || !feed.medium || !feed.researchgate));
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="portfolio-page">
       <Navbar />
 
-      {/* ─── HERO ──────────────────────────────────────────── */}
-      <section className="pt-28 pb-16 px-4 sm:px-6 max-w-5xl mx-auto">
-        <motion.div initial="hidden" animate="visible" variants={stagger}>
-          <motion.div variants={fadeUp}>
-            <Avatar size={72} className="mb-5" priority />
-          </motion.div>
-
-          <motion.h1
-            variants={fadeUp}
-            className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight leading-tight mb-2"
-            data-testid="hero-title"
-          >
-            Hi, I'm Peter O.
-          </motion.h1>
-          <motion.h2
-            variants={fadeUp}
-            className="text-xl sm:text-2xl md:text-3xl font-bold text-muted-foreground mb-5"
-          >
-            Information Systems Student & Analyst
-          </motion.h2>
-
-          <motion.p
-            variants={fadeUp}
-            className="text-base sm:text-lg text-muted-foreground max-w-xl mb-6 leading-relaxed"
-          >
-            An information systems analyst dedicated to building efficient systems.
-            I help clients launch web apps, automate data pipelines, build crypto
-            solutions, and design high-quality graphics — from idea to deployment,
-            fast and right.
-          </motion.p>
-
-          <motion.div variants={fadeUp} className="flex items-center gap-3 mb-8">
-            <span className="text-2xl" role="img" aria-label="Nigeria flag">🇳🇬</span>
-            <span className="text-sm text-muted-foreground font-medium">
-              Trusted by clients worldwide
-            </span>
-            <div className="flex text-yellow-400 gap-0.5">
-              {[...Array(5)].map((_, i) => (
-                <Star key={i} size={13} fill="currentColor" />
-              ))}
-            </div>
-          </motion.div>
-
-          <motion.div variants={fadeUp} className="flex flex-wrap gap-3">
-            <a
-              href="#contact"
-              className="inline-flex items-center gap-2 bg-primary text-primary-foreground font-semibold px-6 py-3 rounded-full hover:opacity-90 transition-opacity text-sm sm:text-base"
-              data-testid="hero-cta"
-            >
-              Let's talk now
-              <ArrowRight size={15} />
-            </a>
-            <a
-              href="https://www.fiverr.com/s/Ldr0Zxo"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-2 border border-border text-foreground font-semibold px-6 py-3 rounded-full hover:bg-muted transition-colors text-sm sm:text-base"
-              data-testid="hero-fiverr-cta"
-            >
-              <SiFiverr size={15} className="text-[#1dbf73]" />
-              Hire on Fiverr
-            </a>
-          </motion.div>
-        </motion.div>
-
-        {/* Stats grid */}
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          variants={stagger}
-          className="mt-12 border border-border rounded-2xl p-2 grid grid-cols-2 gap-2"
-          data-testid="stats-grid"
-        >
-          {STATS.map((stat) => (
-            <motion.div
-              key={stat.label}
-              variants={fadeUp}
-              className={`rounded-xl p-5 ${
-                stat.highlight
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted/50"
-              }`}
-              data-testid={`stat-${stat.label.toLowerCase().replace(/\s+/g, "-")}`}
-            >
-              <stat.icon
-                size={20}
-                className={`mb-3 ${
-                  stat.highlight ? "text-primary-foreground" : "text-primary"
-                }`}
-              />
-              <p
-                className={`text-xs mb-1 ${
-                  stat.highlight
-                    ? "text-primary-foreground/80"
-                    : "text-muted-foreground"
-                }`}
-              >
-                {stat.label}
-              </p>
-              <p className="text-2xl font-bold">{stat.value}</p>
-            </motion.div>
-          ))}
-        </motion.div>
-      </section>
-
-      {/* ─── SOCIAL PROOF ──────────────────────────────────── */}
-      <section className="py-20 px-4 sm:px-6 bg-primary/5 dark:bg-primary/10">
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          variants={stagger}
-          className="max-w-3xl mx-auto text-center"
-        >
-          <motion.h2
-            variants={fadeUp}
-            className="text-2xl sm:text-3xl md:text-4xl font-extrabold mb-10 leading-tight"
-          >
-            Delivering quality results for clients across the globe.
-          </motion.h2>
-
-          <motion.div
-            variants={stagger}
-            className="grid grid-cols-2 sm:grid-cols-4 gap-6 mb-10"
-          >
-            {PROOF_STATS.map((s) => (
-              <motion.div key={s.label} variants={fadeUp} className="text-center">
-                <p className="text-4xl font-extrabold text-foreground">{s.value}</p>
-                <p className="text-sm text-muted-foreground mt-1">{s.label}</p>
+      <main>
+        <section className="hero-section" id="top">
+          <div className="hero-grid">
+            <motion.div className="hero-copy" initial="hidden" animate="visible" variants={revealGroup}>
+              <motion.div variants={reveal} className="eyebrow">
+                <span className="live-dot" />
+                <span>Information systems / Lagos, Nigeria</span>
+                <span className="font-mono eyebrow-code">[01—26]</span>
               </motion.div>
-            ))}
-          </motion.div>
-
-          <motion.div variants={fadeUp} className="flex flex-wrap justify-center gap-3">
-            <a
-              href="#contact"
-              className="inline-flex items-center gap-2 bg-primary text-primary-foreground font-semibold px-6 py-3 rounded-full hover:opacity-90 transition-opacity"
-            >
-              Let's talk now
-              <ArrowRight size={15} />
-            </a>
-            <a
-              href="https://www.fiverr.com/s/Ldr0Zxo"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-2 border border-border bg-background text-foreground font-semibold px-6 py-3 rounded-full hover:bg-muted transition-colors"
-            >
-              <SiFiverr size={15} className="text-[#1dbf73]" />
-              Hire on Fiverr
-            </a>
-          </motion.div>
-        </motion.div>
-      </section>
-
-      {/* ─── PROJECTS ──────────────────────────────────────── */}
-      <section id="projects" className="py-20 px-4 sm:px-6 max-w-5xl mx-auto">
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          variants={stagger}
-        >
-          <motion.h2
-            variants={fadeUp}
-            className="text-3xl sm:text-4xl font-extrabold text-center mb-3"
-          >
-            Some projects I've worked on
-          </motion.h2>
-          <motion.p
-            variants={fadeUp}
-            className="text-center text-muted-foreground mb-8 max-w-lg mx-auto"
-          >
-            A collection of systems, tools, and apps built across different domains.
-          </motion.p>
-
-          {/* Category filter */}
-          <motion.div
-            variants={fadeUp}
-            className="flex flex-wrap gap-2 justify-center mb-10"
-          >
-            {CATEGORIES.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className={`text-xs sm:text-sm font-medium px-4 py-2 rounded-full border transition-colors ${
-                  activeCategory === cat
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "border-border text-muted-foreground hover:text-foreground hover:bg-muted"
-                }`}
-                data-testid={`filter-${cat.toLowerCase().replace(/[\s&]/g, "-")}`}
-              >
-                {cat}
-              </button>
-            ))}
-          </motion.div>
-
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeCategory}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.25 }}
-              className="grid grid-cols-1 md:grid-cols-2 gap-6"
-            >
-              {filteredProjects.map((project) => (
-                <div
-                  key={project.id}
-                  className="border border-border rounded-2xl overflow-hidden hover:border-primary/40 transition-colors group"
-                  data-testid={`project-card-${project.id}`}
-                >
-                  {/* Preview */}
-                  <div className="relative aspect-video overflow-hidden">
-                    {project.image ? (
-                      <img
-                        src={project.image}
-                        alt={project.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                    ) : (
-                      <div
-                        className="w-full h-full flex items-center justify-center"
-                        style={{
-                          background: `linear-gradient(135deg, ${project.gradientFrom}, ${project.gradientTo})`,
-                        }}
-                      >
-                        <span className="text-white/30 text-6xl font-black tracking-tighter select-none">
-                          {project.title.slice(0, 2).toUpperCase()}
-                        </span>
-                      </div>
-                    )}
-                    <div className="absolute top-3 left-3">
-                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${project.badgeClass}`}>
-                        {project.category}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Info */}
-                  <div className="p-5">
-                    <h3 className="font-bold text-base mb-1.5">{project.title}</h3>
-                    <p className="text-muted-foreground text-sm leading-relaxed mb-4">
-                      {project.description}
-                    </p>
-                    <div className="flex flex-wrap gap-1.5 mb-4">
-                      {project.stack.map((t) => (
-                        <span
-                          key={t}
-                          className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded"
-                        >
-                          {t}
-                        </span>
-                      ))}
-                    </div>
-                    <a
-                      href={project.link}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:gap-2.5 transition-all"
-                      data-testid={`btn-view-project-${project.id}`}
-                    >
-                      View on GitHub
-                      <ExternalLink size={13} />
-                    </a>
-                  </div>
-                </div>
-              ))}
-            </motion.div>
-          </AnimatePresence>
-
-          <motion.div variants={fadeUp} className="text-center mt-12">
-            <a
-              href="https://github.com/ONOSPETER"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-2 border border-primary text-primary font-semibold px-6 py-3 rounded-full hover:bg-primary hover:text-primary-foreground transition-colors"
-            >
-              <FaGithub size={16} />
-              View All on GitHub
-              <ArrowRight size={15} />
-            </a>
-          </motion.div>
-        </motion.div>
-      </section>
-
-      {/* ─── SERVICES ──────────────────────────────────────── */}
-      <section id="services" className="py-20 px-4 sm:px-6 bg-slate-900">
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          variants={stagger}
-          className="max-w-5xl mx-auto"
-        >
-          <motion.h2
-            variants={fadeUp}
-            className="text-3xl sm:text-4xl font-extrabold text-white text-center mb-3"
-          >
-            Services I Offer
-          </motion.h2>
-          <motion.p
-            variants={fadeUp}
-            className="text-center text-slate-400 mb-14 max-w-lg mx-auto"
-          >
-            A wide range of services — here are the key ones that make the most
-            impact.
-          </motion.p>
-
-          <motion.div
-            variants={stagger}
-            className="grid grid-cols-1 md:grid-cols-2 gap-4"
-          >
-            {SERVICES.map((service) => (
-              <motion.div
-                key={service.title}
-                variants={fadeUp}
-                className={`border border-slate-700 rounded-2xl p-6 hover:border-primary/50 transition-colors ${
-                  service.fullWidth ? "md:col-span-2" : ""
-                }`}
-                data-testid={`service-card-${service.title
-                  .toLowerCase()
-                  .replace(/[\s&/]/g, "-")}`}
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <service.icon size={22} className="text-white" />
-                  <span className="text-xs font-medium text-primary bg-primary/10 px-2.5 py-1 rounded-full">
-                    {service.tag}
-                  </span>
-                </div>
-                <h3 className="text-base font-bold text-white mb-2">
-                  {service.title}
-                </h3>
-                <p className="text-slate-400 text-sm leading-relaxed mb-4">
-                  {service.description}
-                </p>
-                {service.learnMore && (
-                  <a
-                    href="#contact"
-                    className="inline-flex items-center gap-1 text-primary text-sm font-semibold hover:gap-2 transition-all"
-                  >
-                    Learn more
-                    <ArrowRight size={13} />
-                  </a>
-                )}
+              <motion.h1 variants={reveal}>
+                I build systems<br />
+                <em>worth studying.</em>
+              </motion.h1>
+              <motion.p variants={reveal} className="hero-lede">
+                Peter Obiegba is an Information Systems student and analyst working at the useful edge of autonomous technology, data, web applications, and research.
+              </motion.p>
+              <motion.div variants={reveal} className="hero-actions">
+                <a href="#work" className="button button-primary" data-testid="link-hero-work">
+                  See the working set <ArrowDownRight size={16} />
+                </a>
+                <a href="#contact" className="text-link" data-testid="link-hero-contact">
+                  Have a problem to map? <ArrowRight size={15} />
+                </a>
               </motion.div>
-            ))}
-          </motion.div>
+              <motion.div variants={reveal} className="hero-note">
+                <span className="font-mono">currently</span>
+                <span>researching how software makes decisions in the real world.</span>
+              </motion.div>
+            </motion.div>
 
-          <motion.div variants={fadeUp} className="text-center mt-14">
-            <a
-              href="#contact"
-              className="inline-flex items-center gap-2 bg-primary text-primary-foreground font-semibold px-6 py-3 rounded-full hover:opacity-90 transition-opacity"
-            >
-              Let's talk now
-              <ArrowRight size={15} />
-            </a>
-          </motion.div>
-        </motion.div>
-      </section>
-
-      {/* ─── GRAPHICS PORTFOLIO ────────────────────────────── */}
-      <section id="graphics" className="py-20 px-4 sm:px-6 max-w-5xl mx-auto">
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          variants={stagger}
-        >
-          <motion.h2
-            variants={fadeUp}
-            className="text-3xl sm:text-4xl font-extrabold text-center mb-3"
-          >
-            Graphics Portfolio
-          </motion.h2>
-          <motion.p
-            variants={fadeUp}
-            className="text-center text-muted-foreground mb-12 max-w-lg mx-auto"
-          >
-            A showcase of UI/UX work, poster designs, flyers, and social media
-            graphics.
-          </motion.p>
-
-          <motion.div variants={fadeUp} className="relative">
-            {/* Main slide */}
-            <div className="overflow-hidden rounded-2xl border border-border bg-muted/30">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={graphicsIdx}
-                  initial={{ opacity: 0, x: 40 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -40 }}
-                  transition={{ duration: 0.35 }}
-                  className="relative"
-                >
-                  <img
-                    src={GRAPHICS[graphicsIdx].src}
-                    alt={GRAPHICS[graphicsIdx].label}
-                    className="w-full max-h-[520px] object-contain mx-auto block"
-                    loading="lazy"
-                    decoding="async"
-                  />
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent px-5 py-4">
-                    <p className="text-white font-semibold text-sm">{GRAPHICS[graphicsIdx].label}</p>
-                    <p className="text-white/70 text-xs">{GRAPHICS[graphicsIdx].client}</p>
-                  </div>
-                </motion.div>
-              </AnimatePresence>
+            <motion.div className="hero-portrait-wrap" initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8, delay: 0.2 }}>
+              <div className="portrait-grid" />
+              <div className="portrait-label font-mono">FIELD NOTE 001 / PORTRAIT</div>
+              <Avatar />
+              <div className="portrait-stamp">
+                <Sparkles size={14} />
+                <span>Thoughtful<br />by default</span>
+              </div>
+              <div className="portrait-caption font-mono">08° 29′ N / 04° 32′ E</div>
+            </motion.div>
+          </div>
+          <div className="hero-ticker" aria-label="Areas of practice" data-testid="text-practice-ticker">
+            <div className="marquee-track">
+              <span>RESEARCH WRITING</span><i>+</i><span>AUTONOMOUS TECHNOLOGY</span><i>+</i><span>DATA SYSTEMS</span><i>+</i><span>WEB APPLICATIONS</span><i>+</i><span>RESEARCH WRITING</span><i>+</i><span>AUTONOMOUS TECHNOLOGY</span><i>+</i><span>DATA SYSTEMS</span><i>+</i><span>WEB APPLICATIONS</span><i>+</i>
             </div>
+          </div>
+        </section>
 
-            {/* Navigation arrows */}
-            <button
-              onClick={prevGraphic}
-              className="absolute left-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/90 border border-border flex items-center justify-center text-foreground hover:bg-muted transition-colors shadow-md"
-              aria-label="Previous"
-              data-testid="btn-prev-graphic"
-            >
-              <ChevronLeft size={18} />
-            </button>
-            <button
-              onClick={nextGraphic}
-              className="absolute right-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:opacity-90 transition-opacity shadow-md"
-              aria-label="Next"
-              data-testid="btn-next-graphic"
-            >
-              <ChevronRight size={18} />
-            </button>
-
-            {/* Dots */}
-            <div className="flex justify-center gap-2 mt-5">
-              {GRAPHICS.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setGraphicsIdx(i)}
-                  className={`h-2 rounded-full transition-all ${
-                    i === graphicsIdx ? "w-6 bg-primary" : "w-2 bg-muted-foreground/30"
-                  }`}
-                  aria-label={`Go to slide ${i + 1}`}
-                />
-              ))}
-            </div>
-
-            {/* Thumbnail strip */}
-            <div className="grid grid-cols-5 gap-2 mt-5">
-              {GRAPHICS.map((g, i) => (
-                <button
-                  key={i}
-                  onClick={() => setGraphicsIdx(i)}
-                  className={`rounded-lg overflow-hidden border-2 transition-colors aspect-square ${
-                    i === graphicsIdx ? "border-primary" : "border-transparent opacity-60 hover:opacity-100"
-                  }`}
-                >
-                  <img
-                    src={g.src}
-                    alt={g.label}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                    decoding="async"
-                  />
-                </button>
-              ))}
-            </div>
-          </motion.div>
-        </motion.div>
-      </section>
-
-      {/* ─── CTA ───────────────────────────────────────────── */}
-      <section
-        id="contact"
-        className="py-24 px-4 sm:px-6 max-w-3xl mx-auto text-center"
-      >
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          variants={stagger}
-        >
-          <motion.h2
-            variants={fadeUp}
-            className="text-3xl sm:text-4xl font-extrabold mb-4"
-          >
-            Ready to start your project?
-          </motion.h2>
-          <motion.p
-            variants={fadeUp}
-            className="text-muted-foreground mb-8 max-w-md mx-auto"
-          >
-            Let's work together to bring your ideas to life. Get in touch today
-            and let's discuss how I can help you achieve your goals.
-          </motion.p>
-          <motion.div variants={fadeUp} className="flex flex-wrap justify-center gap-3">
-            <a
-              href="https://wa.me/2347055876701"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-2 bg-primary text-primary-foreground font-semibold px-8 py-3.5 rounded-full hover:opacity-90 transition-opacity"
-              data-testid="btn-get-started"
-            >
-              Get Started
-              <ArrowRight size={15} />
-            </a>
-            <a
-              href="https://www.fiverr.com/s/Ldr0Zxo"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-2 border border-border text-foreground font-semibold px-8 py-3.5 rounded-full hover:bg-muted transition-colors"
-              data-testid="btn-fiverr-cta"
-            >
-              <SiFiverr size={16} className="text-[#1dbf73]" />
-              Order on Fiverr
-            </a>
-          </motion.div>
-        </motion.div>
-      </section>
-
-      {/* ─── FOOTER ────────────────────────────────────────── */}
-      <footer className="border-t border-border bg-muted/30 py-10 px-4 sm:px-6">
-        <div className="max-w-5xl mx-auto">
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6 mb-8">
-            <div className="flex items-center gap-3">
-              <Avatar size={40} />
-              <div>
-                <p className="font-bold text-sm">Peter Obiegba</p>
-                <p className="text-xs text-muted-foreground max-w-xs leading-snug">
-                  Building sharp web apps, data tools, crypto systems, and design
-                  systems. Based in Nigeria, working worldwide.
-                </p>
+        <section className="intro-section section-rule">
+          <div className="section-kicker"><span className="font-mono">01</span><span>Context, not a tagline</span></div>
+          <div className="intro-layout">
+            <h2>Many disciplines.<br /><em>One operating system.</em></h2>
+            <div className="intro-text">
+              <p>I am drawn to the places where a good question meets a workable prototype. My practice moves between building, investigating, and explaining — because a system is only useful when people can understand what it is doing.</p>
+              <p className="muted-copy">Based in Nigeria, available for collaborations that need both an analytical mind and a pair of hands that ships.</p>
+              <div className="stat-strip" data-testid="stats-live">
+                <div><strong>{feed?.github?.repositories?.length ?? "—"}</strong><span>public builds</span></div>
+                <div><strong>{feed?.medium?.articles?.length ?? "—"}</strong><span>published notes</span></div>
+                <div><strong>{research?.citations ?? "—"}</strong><span>research citations</span></div>
               </div>
             </div>
           </div>
+        </section>
 
-          <div className="flex flex-wrap gap-x-6 gap-y-2 mb-6 text-sm text-muted-foreground">
-            {[
-              { label: "Home", href: "#" },
-              { label: "Projects", href: "#projects" },
-              { label: "Services", href: "#services" },
-              { label: "Graphics", href: "#graphics" },
-              { label: "Contact", href: "#contact" },
-            ].map((link) => (
-              <a
-                key={link.label}
-                href={link.href}
-                className="hover:text-foreground transition-colors"
-                data-testid={`footer-link-${link.label.toLowerCase()}`}
-              >
-                {link.label}
-              </a>
-            ))}
-          </div>
-
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex gap-4 items-center">
-              <a
-                href="https://github.com/ONOSPETER"
-                target="_blank"
-                rel="noreferrer"
-                aria-label="GitHub"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-                data-testid="footer-social-github"
-              >
-                <FaGithub size={19} />
-              </a>
-              <a
-                href="https://x.com/lexlex99722746"
-                target="_blank"
-                rel="noreferrer"
-                aria-label="Twitter / X"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-                data-testid="footer-social-twitter"
-              >
-                <FaTwitter size={19} />
-              </a>
-              <a
-                href="https://wa.me/2347055876701"
-                target="_blank"
-                rel="noreferrer"
-                aria-label="WhatsApp"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-                data-testid="footer-social-whatsapp"
-              >
-                <FaWhatsapp size={19} />
-              </a>
-              <a
-                href="https://www.fiverr.com/s/Ldr0Zxo"
-                target="_blank"
-                rel="noreferrer"
-                aria-label="Fiverr"
-                className="text-muted-foreground hover:text-[#1dbf73] transition-colors"
-                data-testid="footer-social-fiverr"
-              >
-                <SiFiverr size={19} />
-              </a>
+        <section className="work-section section-rule" id="work">
+          <div className="section-heading">
+            <div>
+              <div className="section-kicker"><span className="font-mono">02</span><span>Live repository index</span></div>
+              <h2>Selected <em>working set.</em></h2>
             </div>
-
-            <p className="text-xs text-muted-foreground">
-              © Peter Obiegba. All rights reserved. 2025–{new Date().getFullYear()}.
-            </p>
+            {feed?.github?.profileUrl && (
+              <ExternalAnchor href={feed.github.profileUrl} className="outline-link" testId="link-github-profile">
+                <Github size={16} /> @{feed.github.username} <ExternalLink size={13} />
+              </ExternalAnchor>
+            )}
           </div>
-        </div>
-      </footer>
+
+          {isLoading ? <LoadingState /> : isError ? (
+            <div className="empty-panel error-panel" data-testid="status-feed-error">
+              <Radio size={21} />
+              <div><strong>Live sources are taking a pause.</strong><p>Try the connection again to load the current repository index.</p></div>
+              <button type="button" onClick={() => refetch()} className="button button-small" data-testid="button-retry-feed">Retry sync</button>
+            </div>
+          ) : (
+            <>
+              {hasPartialData && <div className="partial-notice" data-testid="status-partial-feed">Some live sources are unavailable; the rest of the notebook is still readable.</div>}
+              <div className="filter-row" aria-label="Filter repositories by language">
+                {languages.map((language) => (
+                  <button type="button" key={language} onClick={() => setRepoFilter(language)} className={`filter-chip ${repoFilter === language ? "filter-chip-active" : ""}`} data-testid={`button-filter-${language.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}>
+                    {language}
+                  </button>
+                ))}
+              </div>
+              {filteredRepositories.length === 0 ? (
+                <div className="empty-panel" data-testid="status-repositories-empty">
+                  <Code2 size={23} />
+                  <div><strong>No public repositories in this view yet.</strong><p>When a live source is available, it will appear here with its current language and activity.</p></div>
+                </div>
+              ) : (
+                <motion.div className="repo-grid" initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-80px" }} variants={revealGroup}>
+                  {filteredRepositories.map((repo, index) => {
+                    const artwork = artworkForRepo(repo.name);
+                    return (
+                      <motion.article className={`repo-card ${index === 0 ? "repo-card-featured" : ""}`} variants={reveal} key={repo.url} data-testid={`card-repository-${repo.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}>
+                        <div className="repo-visual">
+                          {artwork ? <img src={artwork} alt="" loading="lazy" /> : <div className="repo-monogram">{initials(repo.name)}</div>}
+                          <div className="repo-overlay" />
+                          <span className="font-mono repo-index">0{index + 1}</span>
+                          <ExternalAnchor href={repo.url} className="repo-open" testId={`link-repository-${index}`}>
+                            Open repository <ExternalLink size={13} />
+                          </ExternalAnchor>
+                        </div>
+                        <div className="repo-content">
+                          <div className="repo-meta font-mono"><span>{repo.language || "multi-stack"}</span><span>updated {formatDate(repo.updatedAt)}</span></div>
+                          <h3>{repo.name}</h3>
+                          <p>{repo.description || "A live experiment in Peter's working set, documented in code."}</p>
+                          <div className="repo-footer font-mono"><span>{repo.stars} stars</span><span>{repo.forks} forks</span></div>
+                        </div>
+                      </motion.article>
+                    );
+                  })}
+                </motion.div>
+              )}
+            </>
+          )}
+        </section>
+
+        <section className="research-section section-rule" id="research">
+          <div className="section-kicker"><span className="font-mono">03</span><span>Research portfolio</span></div>
+          <div className="research-layout">
+            <div className="research-intro">
+              <h2>Curiosity,<br /><em>with receipts.</em></h2>
+              <p>Ideas get sharper when they leave the notebook. Explore the academic work, affiliations, and reading trail behind the builds.</p>
+              {research?.profileUrl && <ExternalAnchor href={research.profileUrl} className="button button-dark" testId="link-researchgate-profile">View ResearchGate profile <ArrowRight size={15} /></ExternalAnchor>}
+            </div>
+            {research?.available ? (
+              <div className="research-card" data-testid="card-research-profile">
+                <div className="research-card-top"><span className="status-pill"><span className="live-dot" /> profile available</span><Globe2 size={20} /></div>
+                <h3>{research.name}</h3>
+                <p className="research-affiliation">{research.affiliation}</p>
+                <p className="research-about">{research.about}</p>
+                <div className="research-metrics">
+                  <div><strong>{research.publications}</strong><span>publications</span></div>
+                  <div><strong>{compactNumber(research.reads)}</strong><span>reads</span></div>
+                  <div><strong>{research.citations}</strong><span>citations</span></div>
+                </div>
+              </div>
+            ) : (
+              <div className="empty-panel research-unavailable" data-testid="status-research-unavailable">
+                <BookOpen size={23} />
+                <div><strong>Research profile currently unavailable.</strong><p>The public profile feed will populate this panel when it is reachable.</p></div>
+              </div>
+            )}
+          </div>
+        </section>
+
+        <section className="writing-section section-rule" id="writing">
+          <div className="section-heading">
+            <div>
+              <div className="section-kicker"><span className="font-mono">04</span><span>Public technical essays</span></div>
+              <h2>Notes from <em>the edge.</em></h2>
+            </div>
+            {feed?.medium?.profileUrl && <ExternalAnchor href={feed.medium.profileUrl} className="outline-link" testId="link-medium-profile">Read on Medium <ExternalLink size={13} /></ExternalAnchor>}
+          </div>
+            {!feed?.medium?.articles?.length ? (
+            <div className="empty-panel" data-testid="status-articles-empty"><PenLine size={22} /><div><strong>No articles in the live feed yet.</strong><p>Writing will appear here as soon as the publishing source is available.</p></div></div>
+          ) : (
+            <div className="article-list">
+              {feed.medium.articles.map((article, index) => (
+                <ExternalAnchor key={article.url} href={article.url} className="article-row" testId={`link-article-${index}`}>
+                  <span className="article-number font-mono">0{index + 1}</span>
+                  <div className="article-main"><h3>{article.title}</h3><p>{article.excerpt}</p></div>
+                  <div className="article-meta font-mono"><span><CalendarDays size={13} /> {formatDate(article.publishedAt)}</span><span>{article.readingMinutes} min read</span></div>
+                  <ArrowUpRightIcon />
+                </ExternalAnchor>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="services-section section-rule" id="services">
+          <div className="section-kicker"><span className="font-mono">05</span><span>How I can be useful</span></div>
+          <div className="services-heading"><h2>Useful things,<br /><em>made carefully.</em></h2><p>For teams who need a person that can zoom from the system diagram to the last visible detail.</p></div>
+          <div className="services-grid">
+            {services.map((service) => {
+              const Icon = service.icon;
+              return (
+                <article className={`service-card service-${service.accent}`} key={service.number} data-testid={`card-service-${service.number}`}>
+                  <div className="service-top"><span className="font-mono">{service.number}</span><Icon size={21} /></div>
+                  <h3>{service.title}</h3><p>{service.body}</p>
+                  <div className="service-tags">{service.tags.map((tag) => <span key={tag}>{tag}</span>)}</div>
+                </article>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="visual-section section-rule" id="graphics">
+          <div className="visual-heading"><div><div className="section-kicker"><span className="font-mono">06</span><span>Selected visual work</span></div><h2>Systems need a <em>visual language.</em></h2></div><p>Campaign graphics for Phonify Communications — a reminder that clear information can still have a little theatre.</p></div>
+          <div className="gallery-stage">
+            <AnimatePresence mode="wait">
+              <motion.div key={graphicWork[graphicIndex].src} className="gallery-image-wrap" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }} transition={{ duration: 0.35 }}>
+                <img src={graphicWork[graphicIndex].src} alt={graphicWork[graphicIndex].title} data-testid={`img-graphic-${graphicIndex}`} />
+                <div className="gallery-label font-mono">{graphicWork[graphicIndex].year} / {graphicWork[graphicIndex].title}</div>
+              </motion.div>
+            </AnimatePresence>
+            <div className="gallery-controls">
+              <span className="font-mono">{String(graphicIndex + 1).padStart(2, "0")} <i>/</i> {String(graphicWork.length).padStart(2, "0")}</span>
+              <button type="button" onClick={showPreviousGraphic} aria-label="Previous graphic" data-testid="button-graphic-previous"><ChevronLeft size={18} /></button>
+              <button type="button" onClick={showNextGraphic} aria-label="Next graphic" data-testid="button-graphic-next"><ChevronRight size={18} /></button>
+            </div>
+          </div>
+        </section>
+
+        <section className="contact-section" id="contact">
+          <div className="contact-orbit orbit-one" /><div className="contact-orbit orbit-two" />
+          <div className="contact-content">
+            <div className="section-kicker"><span className="font-mono">07</span><span>Open channel</span></div>
+            <h2>Bring the<br /><em>interesting problem.</em></h2>
+            <p>Tell me what is unclear, slow, fragile, or waiting to be built. I will reply with a considered next step.</p>
+            <a href="mailto:peterobiegba@gmail.com" className="button button-accent" data-testid="link-contact-email"><Mail size={16} /> peterobiegba@gmail.com <ArrowUpRightIcon /></a>
+            <div className="social-links">
+              {feed?.github?.profileUrl && <ExternalAnchor href={feed.github.profileUrl} className="social-link" testId="link-contact-github"><Github size={16} /> GitHub</ExternalAnchor>}
+              {feed?.medium?.profileUrl && <ExternalAnchor href={feed.medium.profileUrl} className="social-link" testId="link-contact-medium"><PenLine size={16} /> Medium</ExternalAnchor>}
+              {research?.profileUrl && <ExternalAnchor href={research.profileUrl} className="social-link" testId="link-contact-researchgate"><BookOpen size={16} /> ResearchGate</ExternalAnchor>}
+            </div>
+          </div>
+          <div className="contact-side font-mono"><span>BUILD / STUDY / SHARE</span><span>PG-2026</span></div>
+        </section>
+      </main>
+
+      <footer className="site-footer"><a href="#" className="brand" data-testid="link-footer-home"><span className="brand-mark">PO</span><span>peter<span className="brand-dot">.</span>ng</span></a><span className="footer-copy">A personal lab notebook from Nigeria.</span><span className="font-mono">© {new Date().getFullYear()} / made in public</span></footer>
     </div>
   );
+}
+
+function ArrowUpRightIcon() {
+  return <ArrowUpRight size={17} />;
 }
