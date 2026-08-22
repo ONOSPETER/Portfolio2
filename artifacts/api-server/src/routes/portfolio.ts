@@ -77,7 +77,7 @@ type GitHubApiRepository = {
 async function getGitHub() {
   try {
     const repositories = await fetchJson<GitHubApiRepository[]>(
-      `https://api.github.com/users/${GITHUB_USERNAME}/repos?sort=updated&per_page=12`,
+      `https://api.github.com/users/${GITHUB_USERNAME}/repos?sort=updated&per_page=5`,
     );
     return {
       username: GITHUB_USERNAME,

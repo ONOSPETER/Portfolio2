@@ -51,16 +51,6 @@ const graphicWork = [
   { src: "/images/graphic-november-opt.jpg", title: "Monthly social campaign", year: "2025" },
 ];
 
-const repoArtwork: Record<string, string> = {
-  iris: "/images/proj-iris-opt.jpg",
-  "crypto-ai-tax-assistant": "/images/proj-cat-opt.jpg",
-  cat: "/images/proj-cat-opt.jpg",
-  peerpump: "/images/proj-peerpump-opt.jpg",
-  blackfly: "/images/proj-peerpump-opt.jpg",
-  shadowpost: "/images/proj-shadowpost-opt.jpg",
-  discord: "/images/proj-discord-opt.jpg",
-};
-
 const services = [
   {
     number: "01",
@@ -107,20 +97,6 @@ function compactNumber(value: number) {
   return new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 }).format(value);
 }
 
-function initials(value: string) {
-  return value
-    .split(/[\s_-]+/)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("");
-}
-
-function artworkForRepo(name: string) {
-  const key = name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-  const match = Object.entries(repoArtwork).find(([slug]) => key.includes(slug) || slug.includes(key));
-  return match?.[1];
-}
-
 function ExternalAnchor({
   href,
   children,
@@ -136,7 +112,7 @@ function ExternalAnchor({
     <a
       href={href}
       target="_blank"
-      rel="noreferrer"
+      rel="noopener noreferrer"
       className={className}
       data-testid={testId}
     >
@@ -145,10 +121,10 @@ function ExternalAnchor({
   );
 }
 
-function Avatar({ size = "large" }: { size?: "small" | "large" }) {
+function Avatar({ size = "large", src = "/images/peter-portrait-illustrated.png" }: { size?: "small" | "large"; src?: string }) {
   return (
     <div className={size === "large" ? "avatar avatar-large" : "avatar avatar-small"} data-testid="img-avatar">
-      <img src="/images/peter-opt.jpg" alt="Peter Obiegba" loading={size === "large" ? "eager" : "lazy"} />
+      <img src={src} alt="Peter Obiegba" loading={size === "large" ? "eager" : "lazy"} />
     </div>
   );
 }
@@ -245,7 +221,13 @@ export default function Home() {
   const [graphicIndex, setGraphicIndex] = useState(0);
   const [repoFilter, setRepoFilter] = useState("All");
 
-  const repositories = feed?.github?.repositories ?? [];
+  const repositories = useMemo(
+    () =>
+      [...(feed?.github?.repositories ?? [])]
+        .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+        .slice(0, 5),
+    [feed?.github?.repositories],
+  );
   const languages = useMemo(
     () => ["All", ...Array.from(new Set(repositories.map((repo) => repo.language).filter(Boolean) as string[]))],
     [repositories],
@@ -333,6 +315,16 @@ export default function Home() {
                 <div><strong>{feed?.medium?.articles?.length ?? "—"}</strong><span>published notes</span></div>
                 <div><strong>{research?.citations ?? "—"}</strong><span>research citations</span></div>
               </div>
+              <div className="profile-moment" data-testid="profile-moment">
+                <div className="profile-moment-image">
+                  <img src="/images/peter-portrait.png" alt="Peter Obiegba in his studio" loading="lazy" />
+                </div>
+                <div className="profile-moment-copy">
+                  <span className="font-mono">the person behind the systems</span>
+                  <strong>Build with curiosity. Verify with evidence.</strong>
+                  <span>Student, analyst, and builder based in Nigeria — close to the problem and close to the code.</span>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -373,27 +365,20 @@ export default function Home() {
                 </div>
               ) : (
                 <motion.div className="repo-grid" initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-80px" }} variants={revealGroup}>
-                  {filteredRepositories.map((repo, index) => {
-                    const artwork = artworkForRepo(repo.name);
-                    return (
+                  {filteredRepositories.map((repo, index) => (
                       <motion.article className={`repo-card ${index === 0 ? "repo-card-featured" : ""}`} variants={reveal} key={repo.url} data-testid={`card-repository-${repo.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}>
-                        <div className="repo-visual">
-                          {artwork ? <img src={artwork} alt="" loading="lazy" /> : <div className="repo-monogram">{initials(repo.name)}</div>}
-                          <div className="repo-overlay" />
-                          <span className="font-mono repo-index">0{index + 1}</span>
-                          <ExternalAnchor href={repo.url} className="repo-open" testId={`link-repository-${index}`}>
-                            Open repository <ExternalLink size={13} />
-                          </ExternalAnchor>
-                        </div>
                         <div className="repo-content">
+                          <span className="font-mono repo-index">0{index + 1} / LIVE REPOSITORY</span>
                           <div className="repo-meta font-mono"><span>{repo.language || "multi-stack"}</span><span>updated {formatDate(repo.updatedAt)}</span></div>
                           <h3>{repo.name}</h3>
                           <p>{repo.description || "A live experiment in Peter's working set, documented in code."}</p>
                           <div className="repo-footer font-mono"><span>{repo.stars} stars</span><span>{repo.forks} forks</span></div>
+                          <ExternalAnchor href={repo.url} className="repo-open" testId={`link-repository-${index}`}>
+                            Inspect source <ExternalLink size={13} />
+                          </ExternalAnchor>
                         </div>
                       </motion.article>
-                    );
-                  })}
+                  ))}
                 </motion.div>
               )}
             </>
