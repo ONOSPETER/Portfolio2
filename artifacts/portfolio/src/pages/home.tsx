@@ -51,6 +51,14 @@ const graphicWork = [
   { src: "/images/graphic-november-opt.jpg", title: "Monthly social campaign", year: "2025" },
 ];
 
+const technologySignals = [
+  { label: "React systems", icon: Code2 },
+  { label: "Python & AI", icon: Orbit },
+  { label: "TypeScript", icon: Code2 },
+  { label: "Data pipelines", icon: Layers3 },
+  { label: "Web applications", icon: Globe2 },
+];
+
 const services = [
   {
     number: "01",
@@ -256,49 +264,48 @@ export default function Home() {
       <Navbar />
 
       <main>
-        <section className="hero-section" id="top">
-          <div className="hero-grid">
-            <motion.div className="hero-copy" initial="hidden" animate="visible" variants={revealGroup}>
-              <motion.div variants={reveal} className="eyebrow">
-                <span className="live-dot" />
-                <span>Information systems / Lagos, Nigeria</span>
-                <span className="font-mono eyebrow-code">[01—26]</span>
-              </motion.div>
-              <motion.h1 variants={reveal}>
-                I build systems<br />
-                <em>worth studying.</em>
-              </motion.h1>
-              <motion.p variants={reveal} className="hero-lede">
-                Peter Obiegba is an Information Systems student and analyst working at the useful edge of autonomous technology, data, web applications, and research.
-              </motion.p>
-              <motion.div variants={reveal} className="hero-actions">
-                <a href="#work" className="button button-primary" data-testid="link-hero-work">
-                  See the working set <ArrowDownRight size={16} />
-                </a>
-                <a href="#contact" className="text-link" data-testid="link-hero-contact">
-                  Have a problem to map? <ArrowRight size={15} />
-                </a>
-              </motion.div>
-              <motion.div variants={reveal} className="hero-note">
-                <span className="font-mono">currently</span>
-                <span>researching how software makes decisions in the real world.</span>
-              </motion.div>
-            </motion.div>
-
-            <motion.div className="hero-portrait-wrap" initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8, delay: 0.2 }}>
-              <div className="portrait-grid" />
-              <div className="portrait-label font-mono">FIELD NOTE 001 / PORTRAIT</div>
-              <Avatar />
-              <div className="portrait-stamp">
-                <Sparkles size={14} />
-                <span>Thoughtful<br />by default</span>
-              </div>
-              <div className="portrait-caption font-mono">08° 29′ N / 04° 32′ E</div>
-            </motion.div>
+        <section className="hero-section hero-reference" id="top">
+          <div className="hero-background" aria-hidden="true">
+            <img src="/images/peter-portrait.png" alt="" />
+            <div className="hero-background-wash" />
+            <div className="hero-background-grid" />
           </div>
-          <div className="hero-ticker" aria-label="Areas of practice" data-testid="text-practice-ticker">
-            <div className="marquee-track">
-              <span>RESEARCH WRITING</span><i>+</i><span>AUTONOMOUS TECHNOLOGY</span><i>+</i><span>DATA SYSTEMS</span><i>+</i><span>WEB APPLICATIONS</span><i>+</i><span>RESEARCH WRITING</span><i>+</i><span>AUTONOMOUS TECHNOLOGY</span><i>+</i><span>DATA SYSTEMS</span><i>+</i><span>WEB APPLICATIONS</span><i>+</i>
+          <motion.div className="hero-reference-content" initial="hidden" animate="visible" variants={revealGroup}>
+            <motion.div variants={reveal} className="hero-reference-topline">
+              <span className="hero-kicker">HELLO, MY NAME IS</span>
+              <span className="font-mono hero-location">LAGOS / NIGERIA</span>
+            </motion.div>
+            <motion.h1 variants={reveal} className="hero-reference-name">
+              <span>Peter O.</span>
+              <strong>Obiegba</strong>
+            </motion.h1>
+            <motion.p variants={reveal} className="hero-role">
+              Information Systems Analyst
+            </motion.p>
+            <motion.p variants={reveal} className="hero-lede">
+              I build useful systems at the intersection of autonomous technology, data, web applications, and research.
+            </motion.p>
+            <motion.div variants={reveal} className="hero-actions">
+              <a href="#work" className="button button-primary" data-testid="link-hero-work">
+                See the working set <ArrowDownRight size={16} />
+              </a>
+              <a href="#contact" className="text-link" data-testid="link-hero-contact">
+                Start a conversation <ArrowRight size={15} />
+              </a>
+            </motion.div>
+            <motion.div variants={reveal} className="hero-note">
+              <span className="font-mono">currently</span>
+              <span>researching how software makes decisions in the real world.</span>
+            </motion.div>
+          </motion.div>
+          <div className="hero-tech-strip" aria-label="Technology stack" data-testid="technology-slideshow">
+            <div className="hero-tech-track">
+              {[...technologySignals, ...technologySignals].map(({ label, icon: Icon }, index) => (
+                <span className="hero-tech-item" key={`${label}-${index}`}>
+                  <Icon size={16} aria-hidden="true" />
+                  <span>{label}</span>
+                </span>
+              ))}
             </div>
           </div>
         </section>
@@ -489,7 +496,28 @@ export default function Home() {
         </section>
       </main>
 
-      <footer className="site-footer"><a href="#" className="brand" data-testid="link-footer-home"><span className="brand-mark">PO</span><span>peter<span className="brand-dot">.</span>ng</span></a><span className="footer-copy">A personal lab notebook from Nigeria.</span><span className="font-mono">© {new Date().getFullYear()} / made in public</span></footer>
+      <footer className="site-footer">
+        <div className="footer-main">
+          <div>
+            <span className="font-mono footer-kicker">LET'S BUILD SOMETHING USEFUL</span>
+            <h2>Ideas into <em>systems.</em></h2>
+            <a href="#contact" className="button button-primary" data-testid="link-footer-contact">
+              Start a conversation <ArrowUpRight size={15} />
+            </a>
+          </div>
+          <div className="footer-links">
+            <a href="#work">Work</a>
+            <a href="#research">Research</a>
+            <a href="#writing">Writing</a>
+            <a href="#services">Services</a>
+          </div>
+        </div>
+        <div className="footer-bottom">
+          <a href="#" className="brand" data-testid="link-footer-home"><span className="brand-mark">PO</span><span>peter<span className="brand-dot">.</span>ng</span></a>
+          <span className="footer-name">Peter O. Obiegba</span>
+          <span className="font-mono">© {new Date().getFullYear()} / made in public</span>
+        </div>
+      </footer>
     </div>
   );
 }
