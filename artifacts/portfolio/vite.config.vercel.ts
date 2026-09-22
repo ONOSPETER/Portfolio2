@@ -32,8 +32,7 @@ export default defineConfig({
   },
   root: path.resolve(import.meta.dirname),
   build: {
-    outDir: path.resolve(import.meta.dirname, "../../vercel-out"),
-    emptyOutDir: true,
-    sourcemap: false,
-  },
-});
+  outDir: "dist",
+  emptyOutDir: true,
+  sourcemap: false,
+},
